@@ -1,0 +1,662 @@
+/* Главная «Вестлайн». Значения — из tokens.css, решения — DESIGN.md. Общие шапка, подвал, кнопки, форма — base.css. */
+
+/* ---------- 0. Прелоадер: одометр на тёмном экране; уходит вверх колоннами по сетке (preloader.js) ---------- */
+.preloader { display: none; position: fixed; inset: 0; z-index: 100; place-items: center; color: var(--color-text-on-dark); }
+.is-preloading .preloader, .preloader.is-out { display: grid; }
+html.is-preloading, html.is-preloading body { overflow: hidden; }
+.is-preloading .rise, .is-preloading .hero__bg img { animation-play-state: paused; }   /* первый экран оживает, когда прелоадер уходит */
+.preloader__cols { --col: calc((100% - 2 * var(--gutter)) / 4); position: absolute; inset: 0; display: grid; grid-template-columns: calc(var(--gutter) + var(--col)) var(--col) var(--col) calc(var(--gutter) + var(--col)); }
+.preloader__cols i { background: var(--color-dark); transition: transform .95s cubic-bezier(.76, 0, .24, 1); }
+.preloader__cols i + i { box-shadow: inset 1px 0 0 rgb(248 248 248 / .07); }
+.preloader__cols i:not(:last-child) { margin-right: -1px; }
+.preloader__cols i:nth-child(2) { transition-delay: .07s; } .preloader__cols i:nth-child(3) { transition-delay: .14s; } .preloader__cols i:nth-child(4) { transition-delay: .21s; }
+.preloader.is-out .preloader__cols i { transform: translateY(-101%); }
+.preloader__odo { position: relative; z-index: 1; width: min(78vw, 380px); transition: opacity .6s var(--ease), transform .8s var(--ease); }
+.preloader__odo .odo__digits { font-size: clamp(32px, 3.4vw, 46px); }
+.preloader__odo .odo__label { font-size: 14px; transition: color .5s var(--ease); }
+.preloader.is-done .odo__label { color: var(--color-text-on-dark); }
+.preloader.is-out .preloader__odo { opacity: 0; transform: translateY(-48px); }
+@media (max-width: 1100px) { .preloader__cols { --col: calc((100% - 2 * var(--gutter)) / 2); grid-template-columns: calc(var(--gutter) + var(--col)) calc(var(--gutter) + var(--col)); } .preloader__cols i:nth-child(n+3) { display: none; } }
+
+/* ---------- 1. Первый экран ---------- */
+.pin--hero { margin-top: calc(-1 * var(--header-h) - 1px); }   /* первый экран заходит под шапку */
+.hero { position: relative; height: max(100svh, 760px); overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; padding: 0 var(--gutter) 26px; isolation: isolate; }
+.hero__bg { position: absolute; inset: 0; z-index: -2; margin: 0; }
+.hero__bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; transform: scale(1.04); animation: drift 9s var(--ease) forwards; }
+@keyframes drift { to { transform: scale(1); } }
+/* Затемнение: сверху и слева — под заголовок и абзац, снизу — под кнопки и одометр; середина — машина без текста */
+.hero__bg::after { content: ""; position: absolute; inset: 0; background:
+    linear-gradient(180deg, rgb(17 17 17 / .75) 0%, rgb(17 17 17 / .25) 38%, rgb(17 17 17 / 0) 55%, rgb(17 17 17 / .55) 78%, rgb(17 17 17 / .92) 100%),
+    linear-gradient(90deg, rgb(17 17 17 / .55) 0%, rgb(17 17 17 / .15) 45%, rgb(17 17 17 / 0) 65%); }
+/* Сетка 4 колонки поверх кадра — почти незаметная */
+.hero::before { content: ""; position: absolute; inset: 0 var(--gutter); z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgb(248 248 248 / .07) 1px, transparent 1px) 0 0 / 25% 100%; border-right: 1px solid rgb(248 248 248 / .07); }
+
+/* Заголовок — около половины ширины одной строкой (журнал L4). Размер от ширины колонки (cqw):
+   «Авто из Европы» в Alumni Sans 800 = 5,10 em. Вторая строка — акцентом, 0,42 от первой. */
+.hero__top { padding-top: calc(var(--header-h) + 60px); container-type: inline-size; }
+.hero__title { --h: clamp(72px, 10.5cqw, 184px); margin: 0; letter-spacing: -.005em; white-space: nowrap; text-wrap: initial; line-height: 1; }
+.hero__title .t1 { display: block; font-size: var(--h); line-height: .82; }
+.hero__title .t2 { display: block; margin-top: .22em; font-weight: 700; font-style: italic; font-size: calc(var(--h) * .42); line-height: .9; color: var(--color-accent); }
+.hero__title br { display: none; }
+
+.hero__mid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; padding: 40px 0 48px; }
+/* Абзац и кнопки — ровно в первой колонке фоновой сетки, от линии до линии (журнал L6) */
+.hero__text { grid-column: 1; display: grid; gap: 24px; }
+.hero__lead { margin: 0; padding-right: 16px; line-height: 1.5; max-width: none; color: rgb(248 248 248 / .9); }   /* отступ — чтобы строки не касались линии колонки */
+.hero__ctas { display: grid; gap: 10px; }
+/* Доказательства — одной группой в колонке 4, от линии до линии (правка 2026-10-06): пробег и две гарантии */
+.hero__proof { grid-column: 4; display: grid; gap: 20px; min-width: 0; }
+.hero__proof .odo { width: 100%; max-width: 260px; justify-self: center; }
+.hero__guar { list-style: none; margin: 0; padding: 16px 0 0 16px; border-top: 1px solid var(--color-line-on-dark); display: grid; gap: 10px; font-size: 14px; line-height: 1.4; color: rgb(248 248 248 / .8); }   /* отступ слева — чтобы строки не касались линии колонки */
+.hero__guar li { display: grid; grid-template-columns: 14px 1fr; max-width: none; }
+.hero__guar li::before { content: ""; width: 6px; height: 6px; margin-top: 7px; background: var(--color-accent); }
+
+/* Одометр: дуга из штрихов, заполненная часть — акцентом (штрихи рисует home.js) */
+.odo { position: relative; display: grid; place-items: end center; color: var(--color-text-on-dark); }
+.odo__gauge { display: block; width: 100%; height: auto; overflow: visible; }
+.odo__read { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; }
+.odo__label { display: block; margin-bottom: 6px; font-size: 13px; color: rgb(248 248 248 / .7); }
+.odo__digits { display: inline-flex; font-weight: 500; font-size: clamp(24px, 2vw, 32px); font-variant-numeric: tabular-nums; letter-spacing: .04em; line-height: 1.1; vertical-align: bottom; }
+.odo__digits i { font-style: normal; display: inline-block; min-width: .6em; }
+/* Барабаны одометра (home.js): каждая цифра — лента 0–9, прокручивается до своей цифры, младшие делают больше оборотов */
+.odo__digits .dg { height: 1.1em; overflow: hidden; text-align: center; }
+.odo__digits .dg span { display: block; transition: transform 2.2s cubic-bezier(.2, .7, .1, 1); }
+.odo__digits .dg b { display: block; height: 1.1em; font-weight: inherit; }
+.odo__digits .gap { width: .32em; }
+.odo__unit { margin-left: 8px; font-weight: 600; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-accent); }
+[data-gauge] .tick { stroke: currentColor; stroke-width: 1.3; opacity: .32; transition: stroke .35s var(--ease), opacity .35s var(--ease), stroke-width .35s var(--ease); }
+[data-gauge].is-on .tick--on { stroke: var(--color-accent); opacity: 1; }
+/* «Стрелка» — светлый штрих на конце шкалы; после прогона приборов мягко дышит */
+[data-gauge].is-on .tick--head { stroke: var(--color-text-on-dark); opacity: 1; stroke-width: 2.4; }
+.odo.is-idle .tick--head { animation: needle 2.8s ease-in-out infinite; }
+@keyframes needle { 50% { opacity: .45; } }
+
+/* Плавное появление первого экрана (1 с) — один раз при загрузке */
+.rise { opacity: 0; transform: translateY(28px); animation: rise 1s var(--ease) forwards; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* ---------- 2. Откуда машины: манифест крупно со второй колонки, фото во всю ширину экрана, источники по колонкам ---------- */
+.source__manifest { margin: var(--space-5) 0 0 25%; max-width: 24em; font-size: clamp(26px, 2.9vw, 50px); line-height: 1.12; letter-spacing: -.015em; background: var(--bg); text-wrap: pretty; }
+/* Фото стоянки (правка 2026-10-06): при прокрутке окно фото растёт от колонок 2–3 до всего экрана, кадр останавливается,
+   и светлый фон поднимается поверх него колоннами — как переход первого экрана. Окно и подъём ведёт home.js. */
+.pin--photo { margin: var(--space-5) calc(-1 * var(--gutter)) 0; }
+.source__photo { position: relative; z-index: 1; margin: 0 0 var(--space-5); aspect-ratio: 21 / 9; overflow: hidden; }
+.source__frame { position: absolute; inset: 0; overflow: hidden; }
+.source__photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
+.js-pin .source__photo { aspect-ratio: auto; height: 100vh; height: 100svh; margin: 0; }
+.js-pin .source__frame { will-change: clip-path; }
+.js-pin .source__photo img { will-change: transform; }
+.js-pin .pin--photo { margin-bottom: 0; }
+.js-pin .pin--photo + .wrap { padding-top: var(--space-4); }   /* наезд на кадр (отрицательный отступ сверху) ставит home.js */
+.js-pin .pin--hero + .section { scroll-margin-top: calc(-1 * var(--header-offset)); }   /* по пункту меню «Откуда» — блок от самого верха: первый экран закрыт целиком */
+.source__list { list-style: none; margin: 0 0 var(--space-5); padding: 0; }
+.source__list li { max-width: none; padding-right: var(--space-4); }
+.source__i { display: block; margin-bottom: var(--space-3); font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); color: var(--color-accent); }
+.source__list h3 { margin-bottom: 14px; font-size: clamp(30px, 2.4vw, 40px); }
+.source__list p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--muted); }
+.source__num { display: block; margin-bottom: 10px; font-family: var(--font-heading); font-weight: 600; font-size: clamp(72px, 6.4vw, 112px); line-height: .8; white-space: nowrap; }
+.source__num small { margin-left: 8px; font-family: var(--font-body); font-weight: 600; font-size: .2em; letter-spacing: .04em; text-transform: uppercase; }
+/* Строка стран: маршрут по клеткам сетки — акцентная линия идёт от Германии к Минску вслед за прокруткой,
+   страна загорается, когда линия до неё дошла (home.js). Без JS все страны видны сразу. */
+.trip__label { margin: 0 0 var(--space-3); color: var(--muted); }
+.trip__grid { list-style: none; margin: 0; padding: 0; row-gap: 34px; }   /* зазор между рядами, а не поле в клетке: под последним рядом лишней высоты нет */
+.trip__stop { position: relative; max-width: none; min-width: 0; padding: 20px 20px 0 0; border-top: 1px solid var(--line); background: var(--bg); }
+.trip__stop::before { content: ""; position: absolute; left: 0; right: 0; top: -2px; height: 3px; background: var(--color-accent); transform: scaleX(var(--fill, 1)); transform-origin: 0 50%; }
+.trip__code { display: block; margin-bottom: 16px; font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); text-transform: uppercase; color: var(--muted); transition: color .8s var(--ease); }
+.trip__name { display: block; font-family: var(--font-heading); font-weight: 600; font-size: clamp(40px, 4.3vw, 78px); line-height: .9; text-transform: uppercase; white-space: nowrap; transition: color .8s var(--ease), -webkit-text-stroke-color .8s var(--ease); }
+.trip__stop--end .trip__name { font-style: italic; color: var(--color-accent); }
+.trip__days { display: block; margin-top: 12px; max-width: 24ch; font-size: 15px; line-height: 1.4; color: var(--muted); }
+.js-trip .trip__stop::before { transform: scaleX(var(--fill, 0)); }
+.js-trip .trip__name { color: transparent; -webkit-text-stroke: 1.2px rgb(17 17 17 / .35); }
+.js-trip .trip__stop.is-on .trip__name { color: var(--color-text); -webkit-text-stroke-color: var(--color-text); }
+.js-trip .trip__stop.is-on .trip__code { color: var(--color-accent); }
+.js-trip .trip__stop--end.is-on .trip__name { color: var(--color-accent); -webkit-text-stroke-color: var(--color-accent); }
+
+/* ---------- 3. Как работаем ---------- */
+.how__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.how__aside { grid-column: 1 / 3; position: sticky; top: calc(var(--header-h) + 40px); padding-right: var(--space-5); }
+.how__aside h2 { margin-bottom: var(--space-4); }
+.how__total { margin: 0 0 var(--space-5); max-width: 26em; font-size: var(--text-lead); line-height: 1.4; color: rgb(248 248 248 / .8); background: var(--bg); }
+.how__total b { color: var(--color-text-on-dark); font-weight: 600; }
+.how__toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; color: rgb(248 248 248 / .5); }
+.how__toc li { position: relative; padding-left: 22px; transition: color .6s var(--ease); }
+.how__toc li::before { content: ""; position: absolute; left: 0; top: 50%; width: 12px; height: 1px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; transition: transform .6s var(--ease); }
+.how__toc li.is-now { color: var(--color-text-on-dark); }
+.how__toc li.is-now::before { transform: scaleX(1); }
+.how__steps { grid-column: 3 / 5; list-style: none; margin: 0; padding: 0; }
+.step > div { background: var(--bg); }
+.step { display: grid; grid-template-columns: clamp(88px, 8vw, 136px) 1fr; max-width: none; padding: var(--space-5) 0; border-top: 1px solid var(--line); }
+.step:last-child { border-bottom: 1px solid var(--line); }
+.step__n { font-family: var(--font-heading); font-weight: 300; font-size: clamp(64px, 5.6vw, 104px); line-height: .76; color: rgb(248 248 248 / .26); transition: color .8s var(--ease); }
+.step.is-now .step__n { color: var(--color-accent); }
+.step h3 { margin-bottom: 14px; font-size: clamp(32px, 2.6vw, 44px); }
+.step p { margin: 0; font-size: 18px; color: rgb(248 248 248 / .78); }
+.step .step__note { margin-top: 10px; font-size: 14px; color: var(--muted); }
+
+/* ---------- 4. Карусель (правка 2026-10-06): в границах сетки, карточка — ровно две колонки (на телефоне — экран).
+   Лента двигается своим движением (home.js): тянуть мышью с курсором-кругом, листать пальцем, колесом вбок, стрелками.
+   Вертикальная прокрутка страницы через карусель проходит без задержки. ---------- */
+.slider { position: relative; }
+.slider__view { overflow: hidden; touch-action: pan-y; }
+.slider__view:focus-visible { outline-offset: 4px; }
+.slider__track { display: flex; will-change: transform; }
+.slider__track > * { flex: 0 0 25%; min-width: 0; padding-right: var(--space-3); transform-origin: 50% 50%; transition: transform .8s var(--ease); -webkit-user-select: none; user-select: none; }
+.slider.is-dragging .slider__track > * { transform: scale(.96); }   /* при перетаскивании карточки чуть уменьшаются (Hispano Suiza) */
+.slider__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: var(--space-3) 0 -7px; }   /* запас кнопок-стрелок под знаком не добавляется к отступу между блоками */
+.slider__count { margin: 0; color: var(--muted); white-space: nowrap; }
+.slider__progress { position: relative; flex: 1; height: 1px; background: var(--line); }
+.slider__progress i { position: absolute; left: 0; top: -1px; width: 100%; height: 3px; background: var(--color-text); transform: scaleX(0); transform-origin: 0 50%; }
+.slider__count b { color: var(--color-text); font-weight: 600; }
+.slider__nav { display: flex; gap: 8px; }
+.slider__bar { padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.slider__btn { display: grid; place-items: center; width: 64px; height: 52px; border: 0; border-radius: var(--radius); background: transparent; color: inherit; font-size: 30px; line-height: 1; cursor: pointer; transition: color var(--transition-soft) var(--ease), transform var(--transition-soft) var(--ease); }
+.slider__btn:disabled { opacity: .25; cursor: default; }
+/* Курсор-круг «Листать» (Hispano Suiza) — только мышь; при нажатии растёт и становится акцентным */
+.slider__cursor { position: absolute; left: 0; top: 0; z-index: 5; display: none; place-items: center; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; background: var(--color-dark); color: var(--color-text-on-dark); font-weight: 600; font-size: 12px; letter-spacing: var(--caption-tracking); text-transform: uppercase; pointer-events: none; opacity: 0; transition: opacity .4s var(--ease), background-color .4s var(--ease); }
+.slider__cursor span { transition: transform .5s var(--ease); }
+.slider.has-cursor .slider__cursor { display: grid; }
+.slider.has-cursor .slider__view { cursor: none; }
+.slider.is-hover .slider__cursor { opacity: 1; }
+.slider.is-dragging .slider__cursor { background: var(--color-accent); }
+.slider.is-dragging .slider__cursor span { transform: scale(1.15); }
+
+.car { display: flex; flex-direction: column; }
+.car__photo { position: relative; margin: 0; aspect-ratio: 3 / 2; overflow: hidden; background: #d6d6d6; }
+.car__photo img { width: 100%; height: 100%; object-fit: cover; transition: filter .8s var(--ease); -webkit-user-drag: none; user-select: none; }
+.car__body { padding-top: 16px; background: var(--bg); }   /* подложка: линии сетки не проходят через текст */
+/* Карточка — одна колонка сетки (правка 2026-10-06: «очень большие», текст не помещался на экран): страна над характеристиками, выгода под ценой */
+.car__meta { display: grid; gap: 4px; margin: 0; max-width: none; color: var(--muted); }
+.car__meta b { font-weight: 600; color: var(--color-text); }
+.car__name { margin: 12px 0 2px; font-weight: 600; font-size: clamp(24px, 1.7vw, 30px); }
+.car__spec { margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+.car__price { display: grid; gap: 6px; margin: 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.car__price dt { font-size: 14px; color: var(--muted); }
+.car__price dd { margin: 0; font-variant-numeric: tabular-nums; }
+.car__turnkey { font-family: var(--font-heading); font-weight: 600; font-size: clamp(28px, 2vw, 36px); line-height: .9; white-space: nowrap; }
+.car__save { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.car__save b { font-family: var(--font-heading); font-weight: 600; font-style: italic; font-size: clamp(20px, 1.4vw, 24px); line-height: 1; color: var(--color-accent); white-space: nowrap; }
+.car__save span { font-size: 13px; color: var(--muted); }
+.car__save s { text-decoration-thickness: 1px; }
+
+/* ---------- 5. Цены: таблица сравнения, колонки таблицы = колонки сетки ---------- */
+.tariff__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tariff__table th, .tariff__table td { padding: 16px 20px; text-align: left; vertical-align: middle; font-weight: 400; }
+.tariff__table thead th, .tariff__corner { vertical-align: bottom; padding-top: 28px; padding-bottom: 28px; }
+.tariff__table tbody tr { border-top: 1px solid var(--line); }
+.tariff__table tbody tr:last-child { border-bottom: 1px solid var(--line); }
+.tariff__table .is-main { background: rgb(248 248 248 / .05); }
+.tariff__table thead .is-main { box-shadow: inset 0 3px 0 var(--color-accent); }
+.tariff__corner { padding-left: 0 !important; }
+.tariff__corner .caption { display: block; margin-bottom: 10px; color: var(--muted); }
+.tariff__hint { display: block; max-width: 26ch; font-size: 15px; line-height: 1.45; color: rgb(248 248 248 / .72); }
+.tariff__i { display: block; margin-bottom: 14px; font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); color: var(--muted-on-dark, var(--muted)); }
+.tariff__name { display: block; font-family: var(--font-heading); font-weight: 600; font-size: clamp(30px, 2.5vw, 44px); line-height: .9; text-transform: uppercase; }
+.tariff__tag { display: block; min-height: 2.9em; margin-top: 10px; font-size: 15px; line-height: 1.45; color: rgb(248 248 248 / .7); }
+.tariff__price { display: block; margin: 18px 0 22px; font-family: var(--font-heading); font-weight: 600; font-size: clamp(72px, 6.6vw, 124px); line-height: .78; letter-spacing: -.02em; white-space: nowrap; }
+.tariff__price small { margin-left: 6px; font-family: var(--font-body); font-weight: 600; font-size: .26em; vertical-align: .9em; }
+th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
+.tariff__btn { width: 100%; }
+.tariff__table tbody th { padding-left: 0; font-size: 18px; line-height: 1.35; }
+.tariff__table tbody th small { display: block; margin-top: 4px; font-size: 14px; color: rgb(248 248 248 / .6); }
+/* Отметки: галочка — входит, короткая черта — не входит */
+.yes, .no { display: inline-block; vertical-align: middle; }
+.yes { width: 22px; height: 12px; margin: -6px 0 0 2px; border-left: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
+.is-main .yes { color: var(--color-accent); }
+.no { width: 16px; height: 1px; background: rgb(248 248 248 / .35); }
+.tariff__swipe { display: none; }   /* подсказка «Листайте таблицу» — только там, где таблица листается (уже 768) */
+.tariff__terms { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: var(--space-5); font-size: 15px; line-height: 1.5; color: rgb(248 248 248 / .75); }
+.tariff__terms > p { margin: 0; padding: 0 20px; }
+.tariff__terms > p.caption { padding-left: 0; color: var(--muted); }
+.tariff__terms b { display: block; margin-bottom: 8px; font-family: var(--font-heading); font-weight: 600; font-size: 30px; line-height: 1; text-transform: uppercase; color: var(--color-text-on-dark); }
+
+/* ---------- 6. Калькулятор: поля слева, чек справа ---------- */
+.calc__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.calc__intro { grid-column: 1 / 3; padding-right: var(--space-5); }
+.calc__intro h2 { margin-bottom: var(--space-4); }
+.calc__intro p { margin: 0 0 var(--space-5); font-size: var(--text-lead); line-height: 1.4; background: var(--bg); }
+.calc__fields { grid-column: 1 / 3; display: grid; gap: 28px; margin: 0; padding: 0 var(--space-5) 0 0; border: 0; min-width: 0; }
+.calc__field { display: grid; gap: 10px; }
+.calc__field > .caption { color: var(--muted); }
+.calc__field input[type="number"] { width: 100%; min-height: 60px; padding: 0 16px; border: 1px solid var(--color-dark); border-radius: var(--radius); background: var(--color-surface); color: var(--color-text); font-weight: 600; font-size: 24px; font-variant-numeric: tabular-nums; }
+.calc__field input[type="range"] { width: 100%; margin: 4px 0 0; accent-color: var(--color-accent); }
+.calc__field[hidden] { display: none; }
+.seg { display: flex; flex-wrap: wrap; border: 1px solid var(--color-dark); }
+.seg label { flex: 1 1 0; position: relative; min-width: max-content; }
+.seg label + label { border-left: 1px solid var(--color-dark); }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; padding: 8px 14px; font-weight: 500; font-size: 15px; cursor: pointer; transition: background-color var(--transition-soft) var(--ease), color var(--transition-soft) var(--ease); }
+.seg input:checked + span { background: var(--color-dark); color: var(--color-text-on-dark); }
+.seg input:focus-visible + span { outline: 2px solid var(--color-accent); outline-offset: -4px; }
+.seg--stack { flex-direction: column; }
+.seg--stack label + label { border-left: 0; border-top: 1px solid var(--color-dark); }
+.seg--stack span { justify-content: space-between; }
+.seg--stack b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.receipt { grid-column: 3 / 5; grid-row: 1 / span 2; align-self: start; position: sticky; top: calc(var(--header-h) + 24px); padding: clamp(24px, 2.4vw, 40px); background: var(--color-surface); box-shadow: 0 1px 0 var(--line); }
+.receipt__head { margin: 0 0 8px; color: var(--muted); }
+.calc__step { display: none; margin: 0; color: var(--color-accent); }   /* «Шаг 1 / Шаг 2» — до 1100px, где поля и чек ближе друг к другу (правка 2026-10-07) */
+.receipt__lines { margin: 0; }
+.receipt__lines div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px dashed rgb(17 17 17 / .22); }
+.receipt__lines dt { flex: 1 1 auto; min-width: 0; font-size: 15px; }
+.receipt__lines dt small { display: block; font-size: 13px; color: var(--muted); }
+.receipt__lines dd { margin: 0; font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.receipt__total { display: grid; gap: 6px; margin-top: var(--space-3); }
+.receipt__total .caption { color: var(--muted); }
+.receipt__total strong { font-family: var(--font-heading); font-weight: 600; font-size: clamp(56px, 5.2vw, 92px); line-height: .85; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.receipt__byn { font-size: 15px; color: var(--muted); }
+.receipt__rules { margin: var(--space-3) 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.receipt__send { width: 100%; margin-top: var(--space-3); }
+.receipt__hint { margin: 10px 0 0; font-size: 13px; text-align: center; color: var(--muted); }
+
+/* ---------- 7. О компании: счётчик крупно, страхи зачёркиваются, напротив — факт ---------- */
+.about2__count { align-items: end; }
+.about2__n { grid-column: 1 / 4; margin: 0; max-width: none; font-family: var(--font-heading); font-weight: 700; font-size: clamp(150px, 31vw, 560px); line-height: .76; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.about2__cap { grid-column: 4; margin: 0; padding-bottom: .5em; font-size: 16px; line-height: 1.5; color: rgb(248 248 248 / .72); background: var(--bg); }
+.about2__cap b { display: block; margin-bottom: 10px; font-weight: 500; font-size: var(--text-lead); line-height: 1.25; color: var(--color-text-on-dark); }
+.about2__title { margin: var(--space-6) 0 var(--space-4); max-width: 14em; }
+.myths { list-style: none; margin: 0; padding: 0; }
+.myth { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; max-width: none; padding: 52px 0 32px; border-top: 1px solid var(--line); }
+.myth:last-child { border-bottom: 1px solid var(--line); }
+.myth__i { position: absolute; top: 18px; left: 0; font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); color: var(--color-accent); }
+.myth__fear { grid-column: 1 / 3; margin: 0; padding-right: var(--space-4); max-width: none; background: var(--bg); font-size: clamp(28px, 3.2vw, 56px); line-height: 1.05; letter-spacing: -.015em; color: rgb(248 248 248 / .5); transition: color .9s var(--ease); }
+.myth__fear s { text-decoration: none; background: linear-gradient(var(--color-accent), var(--color-accent)) 0 56% / var(--strike, 100%) 4px no-repeat; -webkit-box-decoration-break: clone; box-decoration-break: clone; transition: background-size 1s var(--ease); }
+.myth__fact { grid-column: 3 / 5; margin: 0; max-width: none; background: var(--bg); font-size: 16px; line-height: 1.5; color: rgb(248 248 248 / .72); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.myth__fact b { display: block; margin-bottom: 8px; font-weight: 500; font-size: clamp(22px, 2vw, 32px); line-height: 1.2; color: var(--color-text-on-dark); }
+.js-myths .myth__fear s { --strike: 0%; }
+.js-myths .myth__fear { color: var(--color-text-on-dark); }
+.js-myths .myth__fact { opacity: .15; transform: translateY(16px); }
+.js-myths .myth.is-on .myth__fear { color: rgb(248 248 248 / .42); }
+.js-myths .myth.is-on .myth__fear s { --strike: 100%; }
+.js-myths .myth.is-on .myth__fact { opacity: 1; transform: none; }
+
+/* ---------- 8. Отзывы: клиенты-вкладки слева, отзыв справа, смена — вертикальным сдвигом ---------- */
+.voices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.voices__tabs { grid-column: 1 / 3; list-style: none; margin: 0; padding: 0 var(--space-5) 0 0; background: var(--bg); }
+.voices__tabs li { max-width: none; }
+.voices__tab { position: relative; display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 16px; width: 100%; padding: 18px 0; border: 0; border-top: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; text-align: left; cursor: pointer; transition: color .6s var(--ease); }
+.voices__tabs li:last-child .voices__tab { border-bottom: 1px solid var(--line); }
+.voices__num { font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: .8; transition: color .6s var(--ease); }
+.voices__who { display: grid; gap: 2px; font-size: 15px; line-height: 1.35; }
+.voices__who b { font-weight: 600; font-size: 18px; }
+.voices__tab.is-on { color: var(--color-text); }
+.voices__tab.is-on .voices__num { color: var(--color-accent); }
+.voices__bar { position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--color-text); transform: scaleX(0); transform-origin: 0 50%; }
+.voices__tab.is-on .voices__bar { transform: scaleX(1); }
+.voices.is-playing .voices__tab.is-on .voices__bar { animation: voiceBar var(--voice-time, 8s) linear forwards; }
+@keyframes voiceBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.voices__stage { grid-column: 3 / 5; display: grid; background: var(--bg); }
+.voice { display: grid; align-content: start; gap: 22px; margin: 0 0 var(--space-5); }
+.voice__tag { margin: 0; color: var(--muted); }
+.voice__title { margin: 0; font-weight: 600; font-size: clamp(48px, 4.6vw, 84px); line-height: .86; }
+.voice__text { margin: 0; font-size: clamp(20px, 1.6vw, 26px); line-height: 1.42; letter-spacing: -.005em; }
+.voice__by { display: flex; align-items: center; gap: 16px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.4; color: var(--muted); }
+.voice__by b { display: block; font-weight: 600; font-size: 17px; color: var(--color-text); }
+.voice__ava { display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; background: var(--color-dark); color: var(--color-text-on-dark); font-family: var(--font-heading); font-weight: 700; font-size: 30px; line-height: 1; }
+.voices__nav { display: flex; gap: 8px; justify-content: flex-end; }
+.js-voices .voice { grid-area: 1 / 1; margin: 0; opacity: 0; visibility: hidden; transform: translateY(48px); transition: opacity .8s var(--ease), transform .9s var(--ease), visibility 0s linear .9s; }
+.js-voices .voice.is-out { transform: translateY(-48px); }
+.js-voices .voice.is-on { opacity: 1; visibility: visible; transform: none; transition: opacity .9s var(--ease) .12s, transform 1s var(--ease) .12s, visibility 0s; }
+.js-voices .voices__nav { grid-area: 2 / 1; margin: var(--space-4) 0 -7px; }   /* запас стрелок не добавляется к отступу между блоками */
+.voices__nav { display: none; }
+.js-voices .voices__nav { display: flex; }
+/* До 1100px (правка 2026-10-07): отзывы — лентой карточек, как «Пригнанные» (карточки собирает home.js из тех же отзывов) */
+.voice-slider { display: none; margin-top: var(--space-2); }
+.voice-card { display: flex; flex-direction: column; gap: 12px; }
+.voice-card > * { margin: 0; background: var(--bg); }
+.voice-card .voice__tag { padding-top: 16px; border-top: 1px solid var(--line); }
+.voice-card .voice__title { font-size: 30px; line-height: .9; }
+.voice-card .voice__text { flex: 1; font-size: 16px; line-height: 1.5; }
+.voice-card .voice__by { gap: 12px; padding-top: 14px; font-size: 14px; }
+.voice-card .voice__by b { font-size: 15px; }
+.voice-card .voice__ava { width: 44px; height: 44px; font-size: 24px; }
+
+/* ---------- 9. Вопросы ---------- */
+.faq__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+.faq__grid h2 { grid-column: 1 / 3; position: sticky; top: calc(var(--header-h) + 40px); margin: 0; padding-right: var(--space-5); }
+.faq__list { grid-column: 3 / 5; background: var(--bg); counter-reset: q; }
+.faq__list summary::before { counter-increment: q; content: counter(q, decimal-leading-zero); display: block; margin-bottom: 8px; font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); color: var(--color-accent); }
+.faq__list details { border-top: 1px solid var(--line); }
+.faq__list details:last-child { border-bottom: 1px solid var(--line); }
+.faq__list summary { position: relative; padding: 24px 56px 24px 0; font-weight: 500; font-size: clamp(20px, 1.6vw, 25px); line-height: 1.3; list-style: none; cursor: pointer; }
+.faq__list summary::-webkit-details-marker { display: none; }
+/* «+» — тонкий крестик 18px из двух линий (правка 2026-10-06: был слишком крупный) */
+.faq__list summary::after { content: ""; position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; background: linear-gradient(currentColor, currentColor) 50% 50% / 100% 1.5px no-repeat, linear-gradient(currentColor, currentColor) 50% 50% / 1.5px 100% no-repeat; transition: transform .6s var(--ease), color .6s var(--ease); }
+.faq__list details[open] summary::after { transform: rotate(45deg); color: var(--color-accent); }
+.faq__list details p { margin: 0; padding: 0 56px 26px 0; color: rgb(248 248 248 / .78); }
+/* Плавное раскрытие там, где браузер умеет анимировать высоту до auto */
+@supports (interpolate-size: allow-keywords) {
+  .faq__list { interpolate-size: allow-keywords; }
+  .faq__list details::details-content { height: 0; overflow: clip; transition: height .7s var(--ease), content-visibility .7s allow-discrete; }
+  .faq__list details[open]::details-content { height: auto; }
+}
+
+/* ---------- 10. Заявка ---------- */
+.order__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
+.order__info { grid-column: 1 / 3; padding-right: var(--space-5); }
+.order__info h2 { margin-bottom: var(--space-4); }
+.order__lead, .order__contacts { background: var(--bg); }
+.order__lead { margin: 0 0 var(--space-5); max-width: 26em; font-size: var(--text-lead); line-height: 1.4; }
+.order__contacts { margin: 0 0 var(--space-3); }
+.order__contacts div { display: grid; grid-template-columns: 120px 1fr; align-items: baseline; gap: 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.order__contacts dt { color: var(--muted); }
+.order__contacts dd { margin: 0; font-size: 18px; }
+.order__contacts .order__phone { font-family: var(--font-heading); font-weight: 600; font-size: clamp(36px, 3.4vw, 56px); line-height: 1; }
+.order__panel { grid-column: 3 / 5; padding: clamp(24px, 3vw, 48px); background: var(--color-accent); color: var(--color-accent-text); }   /* отступ под шапку при переходе — scroll-padding у html (base.css); второй давал 176px вместо 88 */
+.order__panel :focus-visible { outline-color: var(--color-dark); }
+.order__panel .form label { color: var(--color-accent-text); }
+.order__panel .form__opt { font-weight: 400; opacity: .78; }
+.order__panel a { color: inherit; }
+.order__panel [data-form-status] { color: rgb(248 248 248 / .88); }
+.order__panel [data-form-status] { font-weight: 600; }
+
+/* ---------- Наведение — только мышь ---------- */
+@media (hover: hover) {
+  .slider__btn:not(:disabled):hover { color: var(--color-accent); }
+  [data-slider-prev]:not(:disabled):hover { transform: translateX(-4px); }
+  [data-slider-next]:not(:disabled):hover { transform: translateX(4px); }
+  .seg label:hover input:not(:checked) + span { background: rgb(17 17 17 / .08); }
+  .faq__list summary:hover::after { color: var(--color-accent); }
+  .voices__tab:not(.is-on):hover { color: var(--color-text); }
+  .contacts__link.is-icon:hover { background: transparent; border-color: var(--color-accent); color: var(--color-accent); }
+}
+
+/* ---------- Планшет ---------- */
+/* 1101–1199 (правка 2026-10-07): заголовок опущен к абзацу (10px), абзац и кнопки в ряд — на колонки 1–2,
+   низ левой части и доказательств справа — на одной линии. Всё в одной сетке первого экрана (hero__mid раскрыт через contents). */
+@media (min-width: 1101px) and (max-width: 1199px) {
+  .hero { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: 1fr auto auto; padding-bottom: 48px; }
+  .hero__top { grid-column: 1 / -1; grid-row: 2; padding-top: 0; }
+  .hero__mid { display: contents; }
+  .hero__text { grid-column: 1 / 3; grid-row: 3; align-self: end; margin-top: 10px; }
+  .hero__ctas { grid-template-columns: 1fr 1fr; }
+  .hero__proof { grid-column: 4; grid-row: 2 / 4; align-self: end; }
+}
+/* 1280 и уже — меньше отступы внутри блоков (правка 2026-10-06; окно фото стоянки прижато к верху — home.js) */
+@media (max-width: 1280px) {
+  .source__manifest { margin-top: var(--space-4); }
+  .pin--photo { margin-top: var(--space-4); }
+  .about2__title { margin-top: var(--space-5); }
+  .order__lead { margin-bottom: var(--space-3); }
+}
+@media (max-width: 1100px) {
+  .hero { height: auto; min-height: 100svh; }
+  /* Первый экран (правка 2026-10-07): заголовок мельче; слева абзац и кнопки, справа одометр и гарантии — по колонкам сетки,
+     низ обеих колонок на одной линии (как на 1101). До 600px — столбиком (ниже). */
+  .hero__title { --h: clamp(56px, 8cqw, 88px); }
+  .hero__title .t2 { margin-top: .06em; }   /* акцентная строка ближе к заголовку (правка 2026-10-07) */
+  .hero__mid { grid-template-columns: 1fr 1fr; align-items: end; gap: 0; padding-top: 30vh; }
+  .hero__text { grid-column: 1; gap: 20px; }
+  .hero__ctas { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 8px; }   /* в ряд, если обе помещаются */
+  .hero__proof { grid-column: 2; gap: 14px; padding-left: 16px; }   /* отступ от линии колонки, как у гарантий на компьютере */
+  .hero__proof .odo { justify-self: start; width: 200px; margin-left: -16px; }   /* у шкалы поле 20 из 240 единиц — крайний штрих встаёт на линию текста */
+  .hero__guar { padding-left: 0; padding-top: 14px; font-size: 13px; }
+  .hero::before { background-size: 50% 100%; }
+  .hero__bg img { object-position: 30% 60%; }
+  h3 { font-size: 26px; }
+  .source__manifest { margin-left: 0; max-width: none; font-size: clamp(18px, 1.9vw, 21px); line-height: 1.3; }   /* на всю ширину, мельче (правки 2026-10-07) */
+  .source__list { grid-template-columns: 1fr 1fr; gap: var(--space-4) 0; }
+  .source__list h3 { margin-bottom: 10px; font-size: 26px; }
+  .source__list p { font-size: 15px; }
+  .source__num { font-size: 60px; }
+  .how__aside { grid-column: 1 / -1; position: static; padding-right: 0; margin-bottom: var(--space-4); }
+  .how__aside h2 { margin-bottom: var(--space-3); } .how__total { margin-bottom: 0; max-width: none; }   /* плотнее, текст на всю ширину (правки 2026-10-07) */
+  .step { grid-template-columns: 96px 1fr; padding: var(--space-4) 0; }
+  .step__n { font-size: 52px; }
+  .step h3 { margin-bottom: 10px; font-size: 26px; }
+  .step p { max-width: none; font-size: 16px; } .step .step__note { font-size: 13px; }   /* текст шага — на всю ширину (правка 2026-10-07) */
+  .how__toc { display: none; }
+  .how__steps { grid-column: 1 / -1; }
+  .car__name { font-size: 22px; } .car__turnkey { font-size: 26px; } .car__save b { font-size: 19px; }
+  .tariff__name { font-size: 26px; } .tariff__price { margin: 14px 0 18px; font-size: 56px; }
+  .tariff__table tbody th { font-size: 16px; } .tariff__hint, .tariff__tag { font-size: 14px; }
+  .tariff__terms { grid-template-columns: 1fr; row-gap: var(--space-3); font-size: 14px; } .tariff__terms > p { padding: 0; max-width: none; }   /* одно под другим, в линию с «Условия» (правка 2026-10-07) */
+  .tariff__terms b { font-size: 24px; }
+  /* Расчёт (правки 2026-10-07): поля слева, чек справа рядом с ними, шаги подписаны; поля и чек компактнее — блок помещается в экран */
+  .calc__intro { grid-column: 1 / -1; padding-right: 0; }
+  .calc__intro h2 { margin-bottom: var(--space-2); }
+  .calc__intro p { margin-bottom: var(--space-4); max-width: none; }
+  .calc__fields { grid-column: 1 / 3; grid-row: 2; padding-right: var(--space-3); gap: 16px; }
+  .calc__field { gap: 6px; }
+  .calc__field input[type="number"] { min-height: 44px; padding: 0 12px; font-size: 18px; }
+  .seg span { min-height: 40px; padding: 6px 10px; font-size: 14px; }
+  .receipt { grid-column: 3 / 5; grid-row: 2; padding: 20px; }
+  .receipt__lines div { gap: 12px; padding: 8px 0; }
+  .receipt__lines dt { font-size: 14px; } .receipt__lines dt small { font-size: 12px; }
+  .receipt__lines dd { font-size: 15px; }
+  .receipt__total { margin-top: var(--space-2); } .receipt__total strong { font-size: 44px; }
+  .receipt__byn { font-size: 14px; }
+  .receipt__rules { margin-top: var(--space-2); font-size: 12px; }
+  .receipt__send { margin-top: var(--space-2); }
+  .receipt__hint { font-size: 12px; }
+  .calc__step { display: block; }
+  .calc__wide { display: none; }
+  .trip__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 28px; }   /* страны — в две строки по четыре (правка 2026-10-07) */
+  .trip__stop { padding-right: 12px; }
+  .trip__code { margin-bottom: 12px; }
+  .trip__name { font-size: clamp(24px, 3.4vw, 36px); }
+  .trip__days { font-size: 14px; }
+  .slider__track > * { flex-basis: 50%; }   /* планшет: две карточки — по колонке сетки */
+  /* «О компании» (правка 2026-10-07): подпись справа от «540» по её центру; страх и факт — в один ряд по центру; «540» без счёта (home.js) */
+  .about2__count { align-items: center; }
+  .about2__n { grid-column: 1 / 3; font-size: 20vw; } .about2__cap { grid-column: 3 / 5; align-self: center; padding: 0; font-size: 15px; }
+  .about2__title { margin-top: var(--space-4); }
+  .myth { align-items: center; padding: 44px 0 24px; }
+  .myth__fear { grid-column: 1 / 3; padding-right: var(--space-3); font-size: clamp(22px, 2.8vw, 30px); } .myth__fact { grid-column: 3 / 5; font-size: 15px; }
+  .myth__fact b { margin-bottom: 4px; font-size: 19px; }
+  /* Отзывы (правка 2026-10-07 «сложно воспринимать»): вкладки скрыты, отзывы — лентой карточек, как «Пригнанные» (home.js) */
+  .js-voice-cards .voices { display: none; }
+  .js-voice-cards .voice-slider { display: block; }
+  .voice { gap: 14px; } .voice__title { font-size: 32px; } .voice__text { font-size: 16px; }
+  .faq__grid h2 { grid-column: 1 / -1; position: static; margin-bottom: var(--space-4); padding-right: 0; }
+  .faq__list { grid-column: 1 / -1; padding-left: 0; }
+  .faq__list summary { padding: 18px 48px 18px 0; font-size: 17px; }
+  .faq__list details p { padding-bottom: 20px; font-size: 15px; }
+  /* Заявка (правки 2026-10-07): текст на всю ширину; на 601–1100 слева форма, справа контакты (ниже), на телефоне — столбиком */
+  .order__info, .order__panel { grid-column: 1 / -1; }
+  .order__info { padding-right: 0; margin-bottom: var(--space-3); }
+  .order__info h2 { margin-bottom: var(--space-2); }
+  .order__lead { max-width: none; }
+  .order__contacts { margin-bottom: var(--space-2); }
+  .order__contacts dd { font-size: 16px; }
+  .order__contacts .order__phone { font-size: 28px; }
+  .contacts__link.is-icon { width: 44px; min-height: 44px; }
+  .order__panel { padding: 24px; }
+  .order__panel .form { grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .order__panel .form > :nth-child(n+3) { grid-column: 1 / -1; }
+  .form label { gap: 4px; font-size: 13px; }
+  .form input, .form textarea, .form select { padding: 10px 14px; font-size: 15px; }
+  .form textarea { min-height: 72px; }
+}
+
+/* 601–1100, первый экран (правка 2026-10-07, как на 1101): заголовок опущен к абзацу (10px); абзац и кнопки в два ряда — ровно
+   по ширине заголовка; одометр и гарантии — той же ширины, от левой линии колонки 2; низ обеих групп на одной линии.
+   Ширина заголовка «Авто из Европы» в Alumni Sans 800 — 5,08 кегля (замер 2026-10-07): кегль и ширины считаются от одного --hh. */
+@media (min-width: 601px) and (max-width: 1100px) {
+  .hero { --hh: clamp(56px, 7.6vw, 88px); --hw: calc(var(--hh) * 5.08); grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 1fr auto auto; padding-bottom: 48px; }
+  .hero__title { --h: var(--hh); }
+  .hero__top { grid-column: 1 / -1; grid-row: 2; padding-top: 0; }
+  .hero__mid { display: contents; }
+  .hero__text { grid-column: 1; grid-row: 3; align-self: end; width: var(--hw); max-width: 100%; margin-top: 10px; }
+  .hero__lead { padding-right: 0; }
+  .hero__ctas { grid-template-columns: 1fr; }
+  .hero__proof { grid-column: 2; grid-row: 2 / 4; align-self: end; width: var(--hw); max-width: 100%; padding-left: 0; }
+}
+
+/* 601–1100, заявка (правки 2026-10-07): заголовок и текст на всю ширину, под ними слева телефон, почта, адрес и мессенджеры,
+   справа форма; обе части одной ширины (две равные колонки с зазором 24px) */
+@media (min-width: 601px) and (max-width: 1100px) {
+  .order__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto auto 1fr; column-gap: var(--space-3); }
+  .order__info { display: contents; }
+  .order__info h2 { grid-column: 1 / -1; grid-row: 1; }
+  .order__lead { grid-column: 1 / -1; grid-row: 2; margin-bottom: var(--space-4); }
+  .order__panel { grid-column: 2; grid-row: 3 / 5; }
+  .order__reach { grid-column: 1; grid-row: 3 / 5; align-self: start; }   /* контакты и мессенджеры одним блоком */
+  .order__contacts { margin: 0 0 var(--space-3); }
+  .order__contacts div { grid-template-columns: 96px 1fr; align-items: baseline; gap: 16px; padding: 14px 0; }
+  .order__contacts div:last-child { border-bottom: 1px solid var(--line); }
+}
+@media (min-width: 601px) and (max-width: 900px) { .order__panel .form { grid-template-columns: 1fr; } }   /* форма в половину ширины — поля одно под другим */
+
+/* 768 и уже (правки 2026-10-07; 1100, 1024, 980 приняты) */
+@media (max-width: 768px) {
+  .hero__lead { font-size: 14px; }   /* абзац первого экрана не спорит с заголовком */
+  .tariff__table tbody th { font-size: 14px; } .tariff__table tbody th small { font-size: 12px; }   /* первый столбец «Трёх пакетов» мельче */
+  .receipt__hint { display: none; }   /* «Параметры перейдут в заявку…» — убрано */
+}
+/* 601–768, заявка: контакты слева едут вместе с прокруткой до конца формы (правка 2026-10-07) */
+@media (min-width: 601px) and (max-width: 768px) { .order__reach { position: sticky; top: var(--header-offset); } }
+
+/* ---------- Телефон ---------- */
+@media (max-width: 600px) {
+  .hero__top { padding-top: calc(var(--header-h) + 24px); }
+  .hero__title { --h: min(56px, 19cqw); }   /* «Авто из Европы» — одной строкой, как на 601 (правка 2026-10-07; было в две строки до 80px) */
+  /* колонка 180px — слишком узко: абзац и кнопки, затем одометр и гарантии — столбиком на всю ширину */
+  .hero__mid { grid-template-columns: 1fr; gap: 36px; padding-top: 26vh; }
+  .hero__proof { grid-column: 1; padding-left: 0; }
+  .hero__proof .odo { margin-left: -16px; }
+  .source__photo { margin-top: var(--space-5); }
+  .source__photo { aspect-ratio: 4 / 3; }
+  .source__list { grid-template-columns: 1fr; }
+  .source__list li { padding-right: 0; }
+  .step { padding: var(--space-4) 0; }
+  .step__n { font-size: 44px; }
+  .slider__track > * { flex-basis: calc(100% + var(--space-2)); padding-right: var(--space-2); }   /* одна карточка на экран; зазор уходит за край */
+  .trip__grid { grid-template-columns: 1fr 1fr; }
+  .trip__name { font-size: clamp(26px, 8vw, 40px); }   /* «Нидерланды» не упирается в соседнюю колонку */
+  .calc__fields, .receipt { grid-column: 1 / -1; grid-row: auto; }
+  .calc__fields { padding-right: 0; }   /* у чека поля с обеих сторон одинаковые — суммы не прилипают к краю (правка 2026-10-07) */
+  .calc__fields { margin-bottom: var(--space-4); }
+  .receipt { position: static; }
+  /* «О компании» на телефоне — столбиком: две колонки по 180px слишком тесны для «540» и страхов (проверка 2026-10-07) */
+  .about2__n { font-size: 25vw; } .about2__cap { font-size: 14px; } .about2__cap b { font-size: 17px; }   /* «540» слева, подпись справа по центру — как на планшете (правка 2026-10-07) */
+  .myth { align-items: start; padding-top: 44px; }
+  .myth__fear { grid-column: 1 / -1; padding-right: 0; margin-bottom: var(--space-2); font-size: 24px; } .myth__fact { grid-column: 1 / -1; }
+  .voice__title { font-size: 30px; }
+  .tariff__terms { grid-template-columns: 1fr; } .tariff__terms > p { padding: 0; }
+  .seg label { flex-basis: 50%; }
+  .seg label:nth-child(3) { border-left: 0; }
+  .seg label:nth-child(n+3) { border-top: 1px solid var(--color-dark); }
+  .seg--stack label { flex-basis: auto; }
+  .order__contacts div { grid-template-columns: 1fr; gap: 4px; padding: 12px 0; }
+  /* Контакты (правка 2026-10-07): слева телефон и почта, справа адрес и мессенджеры — две равные колонки */
+  .order__reach { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-2); }
+  .order__contacts { display: contents; }
+  .order__contacts div:nth-child(1) { grid-column: 1; grid-row: 1; } .order__contacts div:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .order__contacts div:nth-child(3) { grid-column: 2; grid-row: 1; } .order__msg { grid-column: 2; grid-row: 2; padding: 12px 0; border-top: 1px solid var(--line); }
+  .order__contacts div:last-child { border-bottom: 0; }
+  .order__contacts .order__phone { font-size: min(28px, 7vw); white-space: nowrap; }
+  .order__msg .contacts { display: grid; grid-template-columns: repeat(4, minmax(0, 44px)); gap: 6px; }
+  .order__msg .contacts li { display: flex; }
+  .order__msg .contacts__link.is-icon { width: 100%; min-height: 0; aspect-ratio: 1; padding: 0; justify-content: center; }
+  .order__panel { padding: 20px 16px; }
+  .order__panel .form { grid-template-columns: 1fr 1fr; gap: 12px; }   /* имя и телефон — в одну строку (правка 2026-10-07) */
+  .order__panel .form input { min-width: 0; padding-inline: 12px; }   /* маска «+375 __ ___-__-__» помещается в половину строки до 360px */
+  .faq__list summary { padding-right: 44px; }
+  .faq__list details p { padding-right: 0; }
+}
+
+/* ---------- Уже 768 (правки 2026-10-07 на 601; 768 принят — всё, что уже, по одной схеме) ---------- */
+@media (max-width: 767px) {
+  /* Первый экран: машина целиком в верхней части кадра, под ней — заголовок, абзац, кнопки и гарантии друг под другом
+     на всю ширину; одометр скрыт. Кадр шире экрана на 16%: машина занимает 9–92% ширины снимка — при 116vw она целиком в экране. */
+  .hero { grid-template-columns: minmax(0, 1fr); grid-template-rows: 1fr auto auto; padding-top: var(--header-h); padding-bottom: 60px; }   /* снизу 60px — гарантии успевают прочитать, пока следующий блок не наехал (правка 2026-10-07) */   /* лишняя высота экрана — в область фото, текст внизу */
+  .hero__bg { position: relative; inset: auto; z-index: -2; grid-row: 1; display: grid; align-items: center; min-height: 64vw; margin: 0 calc(-1 * var(--gutter)); }
+  .hero__bg img { width: 116vw; max-width: none; height: auto; margin-left: -8vw; aspect-ratio: 3 / 2;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 70%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 16%, #000 70%, transparent 100%); }
+  .hero__bg::after { display: none; }
+  .hero__top { grid-row: 2; grid-column: 1; padding-top: 0; margin-top: -4vw; }
+  .hero__mid { display: grid; grid-row: 3; grid-column: 1; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 24px; padding: 16px 0 0; }
+  .hero__text { grid-column: 1; grid-row: auto; width: auto; margin-top: 0; gap: 20px; }
+  .hero__ctas { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }   /* в один ряд; на узком телефоне, где обе не помещаются, — друг под другом */
+  .hero__proof { grid-column: 1; grid-row: auto; width: auto; padding-left: 0; }
+  .hero__proof .odo { display: none; }
+  /* «Откуда машины»: строки стран нет — последним идёт список источников */
+  .trip { display: none; }
+  .source__list { margin-bottom: 0; }
+  /* «Маршрут»: номер шага ближе к тексту */
+  .step { grid-template-columns: 56px 1fr; }   /* зазор номер → текст около 24px (было 63px) */
+  /* «Три пакета»: таблица листается вбок, «Что входит» закреплено слева; справа — затухание, пока есть что листать */
+  .tariff__swipe { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: 0 0 var(--space-2); color: var(--muted); transition: opacity .8s var(--ease); }
+  .tariff__swipe i { position: relative; width: 36px; height: 1px; background: currentColor; animation: swipe 1.8s var(--ease) infinite; }
+  .tariff__swipe i::after { content: ""; position: absolute; right: 0; top: -3px; width: 7px; height: 7px; border-top: 1px solid currentColor; border-right: 1px solid currentColor; transform: rotate(45deg); }
+  .tariff.is-moved .tariff__swipe { opacity: .35; }   /* после первого пролистывания подсказка гаснет */
+  .tariff.is-fit .tariff__swipe { opacity: 0; }   /* таблица целиком в экране — подсказки нет */
+  .tariff__x { position: relative; margin-right: calc(-1 * var(--gutter)); }
+  .tariff__x::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(90deg, rgb(17 17 17 / 0), var(--bg)); transition: opacity .8s var(--ease); }
+  .tariff__x.is-end::after { opacity: 0; }
+  .tariff__scroll { overflow-x: auto; overscroll-behavior-x: contain; padding-right: var(--gutter); scrollbar-width: none; }
+  .tariff__scroll::-webkit-scrollbar { display: none; }
+  .tariff__scroll:focus-visible { outline-offset: 2px; }
+  /* Колонки таблицы — по колонкам фоновой сетки (правка 2026-10-07): сетка здесь из двух колонок, таблица — четыре такие колонки,
+     то есть 200% ширины содержимого; «Что входит» и каждый пакет — по 25% таблицы */
+  .tariff__table { width: 200%; }
+  .tariff__corner, .tariff__table tbody th { position: sticky; left: 0; z-index: 1; width: 25%; padding-right: 16px; background: var(--bg); box-shadow: 1px 0 0 var(--line); }
+  .tariff__table thead th { padding: 22px 16px; }
+  .tariff__table td { padding-left: 16px; padding-right: 16px; }
+  .tariff__corner { padding-top: 22px; padding-bottom: 22px; }
+  .tariff__i { margin-bottom: 8px; }
+  .tariff__name { font-size: 24px; }
+  .tariff__price { margin: 12px 0 16px; font-size: 48px; }
+  /* Заявка: заголовок, текст, контакты и мессенджеры — сверху, форма — ниже на всю ширину */
+  .order__grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .order__info { display: block; grid-column: 1; margin-bottom: var(--space-3); }
+  .order__info h2, .order__lead { grid-column: auto; grid-row: auto; }
+  .order__lead { margin-bottom: var(--space-3); }
+  .order__reach { grid-column: auto; grid-row: auto; position: static; }
+  .order__panel { grid-column: 1; grid-row: auto; }
+  .order__contacts { margin-bottom: var(--space-3); }
+  .order__panel .form { grid-template-columns: 1fr 1fr; }   /* имя и телефон — рядом в одну строку (правка 2026-10-07) */
+}
+/* 601–767, «Расчёт» (правка 2026-10-07): кнопки двигателя — 2 × 2 одинаковой ширины (остальные кнопки как были);
+   поля и чек растянуты на одну высоту — отступы между полями растут, низ полей и низ чека на одной линии */
+@media (min-width: 601px) and (max-width: 767px) {
+  .seg--fuel label { flex: 1 1 50%; min-width: 0; }
+  .seg--fuel label:nth-child(3) { border-left: 0; }
+  .seg--fuel label:nth-child(n+3) { border-top: 1px solid var(--color-dark); }
+  .calc__fields { align-self: stretch; align-content: space-between; }
+  .receipt { align-self: stretch; display: flex; flex-direction: column; }
+  .receipt__send { margin-top: auto; }
+  .receipt__rules { margin-bottom: var(--space-2); }
+}
+/* 480 и уже: имя и телефон — друг под другом на всю ширину (правка 2026-10-07) */
+@media (max-width: 480px) {
+  .order__panel .form { grid-template-columns: 1fr; }
+  .hero__ctas .button { padding: 0 12px; font-size: 12px; white-space: nowrap; }   /* текст кнопок первого экрана — одной строкой */
+  .hero__ctas { grid-template-columns: repeat(auto-fit, minmax(min(100%, 195px), 1fr)); }
+}
+/* 479 и уже (правка 2026-10-07 на 390): «540» сверху, подпись под ним через 10px */
+@media (max-width: 479px) {
+  .about2__n, .about2__cap { grid-column: 1 / -1; }
+  .about2__cap { padding-top: 10px; }
+}
+@media (max-width: 600px) {
+  .step { grid-template-columns: 50px 1fr; }   /* номер 44px — тот же зазор около 24px */
+  .tariff__table thead th { padding: 18px 12px; } .tariff__table td { padding-left: 12px; padding-right: 12px; }
+  .tariff__corner, .tariff__table tbody th { padding-right: 12px; }
+  .tariff__name { font-size: 22px; } .tariff__price { font-size: 44px; }
+  .tariff__btn { padding: 0 8px; }
+  /* «Пакет услуги» в расчёте — в одну строку: название, под ним цена (правка 2026-10-07) */
+  .seg--stack { flex-direction: row; flex-wrap: nowrap; }
+  .seg--stack label, .seg--stack label:nth-child(n) { flex: 1 1 0; min-width: 0; border-top: 0; }
+  .seg--stack label + label, .seg--stack label:nth-child(3) { border-left: 1px solid var(--color-dark); }
+  .seg--stack span { flex-direction: column; justify-content: center; gap: 2px; height: 100%; padding: 8px 6px; text-align: center; font-size: 13px; line-height: 1.25; }
+  /* Одинаковые отступы в одинаковых группах (правка 2026-10-07 на 430): заголовок → вводный текст ~16px, текст → содержимое ~40px */
+  .sec-head__lead { margin-top: 22px; }
+  .how__aside h2, .calc__intro h2, .order__info h2 { margin-bottom: 22px; }
+  .source__manifest { margin-top: 22px; }
+  .order__lead { margin-bottom: var(--space-4); }
+}
+/* 431–600 (правка 2026-10-07; на 430 и уже не трогать): в карточке «Пригнанных» текст в две колонки одинаковой ширины —
+   слева страна, характеристики, модель; справа цена под ключ и выгода */
+@media (min-width: 431px) and (max-width: 600px) {
+  .car__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; align-items: start; }
+  .car__meta, .car__name, .car__spec { grid-column: 1; padding-right: var(--space-2); }
+  .car__price { grid-column: 2; grid-row: 1 / 4; padding-top: 0; border-top: 0; }
+}
+@keyframes swipe { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__bg img { animation: none; transform: none; }
+  .rise { animation: none; opacity: 1; transform: none; }
+  .odo.is-idle .tick--head { animation: none; }
+  .tariff__swipe i { animation: none; }
+}

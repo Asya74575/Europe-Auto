@@ -1,0 +1,63 @@
+/* Значения из DESIGN.md: направление выбрано 2026-10-05 — вариант Б «Кадр», шрифты Alumni Sans + Geist (только два). */
+
+/* Alumni Sans — заголовки, логотип, крупные цифры (OFL 1.1, ../fonts/OFL-alumni-sans.txt) */
+@font-face { font-family: "Alumni Sans"; src: url("../fonts/alumni-sans-cyrillic-wght.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Alumni Sans"; src: url("../fonts/alumni-sans-latin-wght.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Alumni Sans"; src: url("../fonts/alumni-sans-cyrillic-italic-wght.woff2") format("woff2"); font-style: italic; font-weight: 100 900; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Alumni Sans"; src: url("../fonts/alumni-sans-latin-italic-wght.woff2") format("woff2"); font-style: italic; font-weight: 100 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+/* Geist — текст, кнопки, меню, подписи, цифры одометра (OFL 1.1, ../fonts/OFL-geist.txt) */
+@font-face { font-family: "Geist"; src: url("../fonts/geist-cyrillic-wght.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Geist"; src: url("../fonts/geist-latin-wght.woff2") format("woff2"); font-style: normal; font-weight: 100 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  /* Цвет: светлые и тёмные блоки чередуются, один акцент */
+  --color-bg: #ECECEC;              /* светлый фон (S-2K) */
+  --color-dark: #111111;            /* тёмный фон: первый экран и тёмные блоки */
+  --color-surface: #F8F8F8;         /* поля формы, карточки на светлом */
+  --color-text: #111111;            /* текст на светлом — 15,9:1 */
+  --color-text-on-dark: #F8F8F8;    /* текст на тёмном — 18:1 */
+  --color-muted: #5C5C5C;           /* подписи на светлом — 5,6:1 */
+  --color-muted-on-dark: #8A8A8A;   /* подписи на тёмном — 5,5:1 */
+  --color-accent: #BF4320;          /* кнопки, вторая строка заголовка, шкала одометра, панель формы; текстом на тёмном — 3,6:1, только крупно (от 24px) */
+  --color-accent-hover: #A33618;    /* наведение на кнопку — темнее акцента */
+  --color-accent-text: #F8F8F8;     /* текст на акценте — 4,9:1 */
+  --color-line: rgb(17 17 17 / .12);         /* линии сетки на светлом */
+  --color-line-on-dark: rgb(248 248 248 / .16); /* линии сетки на тёмном */
+
+  /* Шрифты: только локальные файлы из site/assets/fonts; третьего шрифта нет (решение владельца) */
+  --font-heading: "Alumni Sans", "Arial Narrow", sans-serif;
+  --font-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --text-base: 18px;
+  --text-small: 15px;
+  --text-caption: 12px;                        /* подписи и меню: Geist 500, заглавные, разрядка .08em */
+  --text-h1: clamp(64px, 10vw, 168px);         /* h1 служебных страниц; заголовок первого экрана — во всю ширину, см. DESIGN.md */
+  --text-h2: clamp(54px, 8vw, 150px);         /* заголовок блока — утверждение, Alumni Sans 600, акцентная часть курсивом */
+  --text-lead: clamp(20px, 1.6vw, 26px);      /* вводный абзац блока */
+  --caption-tracking: .08em;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+  --space-6: 104px;
+  --space-section: clamp(56px, 5.6vw, 104px); /* отступ сверху и снизу — один для всех секций (меньше по правке 2026-10-06) */
+  --curtain-h: clamp(110px, 18vh, 200px);     /* высота прямоугольников при смене фона между блоками */
+  --header-h: 72px;                           /* высота закреплённой шапки; первый экран заходит под неё */
+  --header-offset: 88px;                      /* высота закреплённой шапки + зазор: якоря и липкие колонки */
+  /* Страница на всю ширину с полями --gutter: колонки содержимого совпадают с линиями сетки на любой ширине (журнал L6) */
+  --gutter: clamp(16px, 2.5vw, 40px);         /* поля страницы и сетки из 4 колонок */
+  --grid-columns: 4;                          /* видимая сетка; 2 колонки до 1100px */
+  --radius: 0px;                              /* прямые углы у кнопок, полей и карточек */
+  --control-height: 52px;
+  --control-height-small: 44px;
+  --transition: 200ms;
+  --transition-soft: 500ms;                   /* наведение, смена цвета — без рывка */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+/* 1280 и уже — плотнее (правка 2026-10-06; 1320 и шире владелец принял как есть) */
+@media (max-width: 1280px) { :root { --space-section: clamp(44px, 4.4vw, 56px); --curtain-h: clamp(90px, 13vh, 140px); } }
+/* 1100 и уже — заголовки, тексты и кнопки мельче (правка 2026-10-07: на 1100 h2 был 88px, текст 18px, кнопки 52px) */
+@media (max-width: 1100px) { :root { --text-base: 16px; --text-small: 14px; --text-h2: clamp(40px, 6.4vw, 70px); --text-lead: 18px; --control-height: 44px; } }
+@media (max-width: 600px) { :root { --text-lead: 17px; } }
