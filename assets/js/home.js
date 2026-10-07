@@ -241,6 +241,24 @@
     });
   }
 
+  // ---------- Форма заявки на компьютере едет под шапкой до конца блока (правка 2026-10-07) ----------
+  // Отступ сверху — 88px под шапкой; в низком окне (масштаб 125 %) форма с ним не помещается — поднимаем её так, чтобы низ
+  // с кнопкой «Отправить» был в экране (16px до края), но не выше, чем шапка закрывает только верхнее поле панели.
+  var orderPanel = document.querySelector('.order__panel');
+  if (orderPanel) {
+    var orderTop = function () {
+      if (twoCols.matches) { orderPanel.style.removeProperty('--order-top'); return; }
+      var cs = getComputedStyle(root), offset = parseFloat(cs.getPropertyValue('--header-offset')) || 88,
+        headerH = parseFloat(cs.getPropertyValue('--header-h')) || 72, padTop = parseFloat(getComputedStyle(orderPanel).paddingTop) || 0;
+      var top = Math.min(offset, Math.max(innerHeight - orderPanel.offsetHeight - 16, headerH - padTop + 8));
+      orderPanel.style.setProperty('--order-top', Math.round(top) + 'px');
+    };
+    orderTop();
+    addEventListener('resize', orderTop);
+    addEventListener('load', orderTop);
+    if ('ResizeObserver' in window) new ResizeObserver(orderTop).observe(orderPanel);   // после отправки панель меняет высоту
+  }
+
   // ---------- Строка стран, вариант 2: линия маршрута идёт от Германии к Минску вслед за прокруткой ----------
   var trip = document.querySelector('[data-trip]');
   if (trip && !reduce) {

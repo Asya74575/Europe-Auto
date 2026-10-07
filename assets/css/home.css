@@ -352,8 +352,9 @@ th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
 /* Компьютер: панель по высоте формы, а не левой колонки (правка 2026-10-07: под кнопкой было до 330px пустоты) */
 @media not all and (max-width: 1100px) { .order__panel { align-self: start; } }   /* встык с «1100 и уже» — без щели на дробной ширине (125 %) */
 /* Компьютер (правка 2026-10-07): форма едет вместе с прокруткой под шапкой до конца блока — до низа левой колонки.
-   Только в окне от 720px высотой: форма ~630px + шапка 88px, в окне ниже кнопка «Отправить» уходила бы за край. */
-@media not all and (max-width: 1100px) { @media (min-height: 720px) { .order__panel { position: sticky; top: var(--header-offset); } } }
+   В окне любой высоты (правка 2026-10-07: при масштабе 125 % окно ниже 720px, и форма стояла): если форма ~620px с шапкой
+   не помещается, home.js поднимает её (--order-top) — кнопка «Отправить» в экране, поля не уходят под шапку. */
+@media not all and (max-width: 1100px) { .order__panel { position: sticky; top: var(--order-top, var(--header-offset)); } }
 
 /* ---------- Наведение — только мышь ---------- */
 @media (hover: hover) {
