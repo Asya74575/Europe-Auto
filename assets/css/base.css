@@ -33,7 +33,7 @@ a { color: inherit; text-underline-offset: 3px; }
 
 /* Шапка — одна на всех страницах, закреплена сверху. Над первым экраном (data-header-clear) прозрачная — класс is-clear
    ставит header-stick.js; после прокрутки — тёмная полупрозрачная. Без JS фон есть всегда. */
-[data-include="header"] { position: sticky; top: 0; z-index: 30; color: var(--color-text-on-dark); background: rgb(17 17 17 / .9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-line-on-dark); transition: background-color .6s var(--ease), border-color .6s var(--ease); }
+[data-include="header"] { position: sticky; top: 0; z-index: 30; color: var(--color-text-on-dark); background: rgb(17 17 17 / .9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-line-on-dark); transition: background-color .8s var(--ease), border-color .8s var(--ease); }
 [data-include="header"].is-clear { background: transparent; border-bottom-color: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .site-header { display: flex; align-items: center; gap: 28px; min-height: var(--header-h); padding: 12px var(--gutter); }
 .site-header__name { font-family: var(--font-heading); font-weight: 900; font-size: 32px; line-height: 1; letter-spacing: .01em; text-transform: uppercase; text-decoration: none; color: inherit; }
@@ -141,7 +141,11 @@ a { color: inherit; text-underline-offset: 3px; }
 .stair { position: absolute; inset: 0; z-index: 4; }
 .js-pin .stair { display: grid; }
 .js-pin .stair i { transform: translateY(101%); will-change: transform; }
-.js-edges .edge i { transform: scaleY(0); will-change: transform; }
+/* Все стыки блоков — тем же приёмом (правка 2026-10-07, референс S-2K): блок останавливается, колонны цвета следующего блока
+   закрывают его целиком. Обёртку .pin--block ставит home.js; прежняя полоса .edge остаётся только без JS и при reduced motion. */
+.stair { overflow: clip; }   /* колонны в покое — под блоком: не удлиняют страницу */
+.js-pin .pin--block > .section { isolation: isolate; }   /* колонны остаются под следующим блоком */
+.js-pin .pin--block .edge { display: none; }
 @media (max-width: 1100px) {
   .edge, .stair { --col: calc((100% - 2 * var(--gutter)) / 2); grid-template-columns: calc(var(--gutter) + var(--col)) calc(var(--gutter) + var(--col)); }
   :is(.edge, .stair) i:nth-child(n+3) { display: none; }
@@ -170,7 +174,8 @@ a { color: inherit; text-underline-offset: 3px; }
 .site-footer__msg svg, .contacts__link svg { width: 20px; height: 20px; fill: currentColor; }
 .site-footer__bottom { grid-column: 1 / -1; padding-top: var(--space-3); border-top: 1px solid var(--color-line-on-dark); color: var(--color-muted-on-dark); font-size: 14px; }
 .site-footer__bottom p { margin: 0; }
-.site-footer__word { margin: 0 0 -.17em; padding: 0 var(--gutter); font-family: var(--font-heading); font-weight: 900; font-size: 30.6vw; line-height: .8; letter-spacing: -.01em; text-transform: uppercase; text-align: center; white-space: nowrap; color: rgb(248 248 248 / .92); user-select: none; }
+a.site-footer__home { color: inherit; text-decoration: none; }   /* «Вестлайн» и логотип внизу — ссылки на первый экран главной, вид прежний */
+.site-footer__word { display: block; text-decoration: none; margin: 0 0 -.17em; padding: 0 var(--gutter); font-family: var(--font-heading); font-weight: 900; font-size: 30.6vw; line-height: .8; letter-spacing: -.01em; text-transform: uppercase; text-align: center; white-space: nowrap; color: rgb(248 248 248 / .92); user-select: none; }
 /* 1100 и уже (правка 2026-10-07 «всё вразброс, очень длинный»): две строки по две колонки по сетке —
    «Вестлайн» и «Связь», под ними «Разделы» и «Документы»; колонки в строке начинаются на одной линии */
 @media (max-width: 1100px) {
@@ -195,7 +200,7 @@ a { color: inherit; text-underline-offset: 3px; }
   .site-footer__brand .button { padding: 0 10px; }
   .site-footer__col--nav { grid-template-columns: max-content; grid-template-rows: none; grid-auto-flow: row; gap: 6px; }
   .site-footer__msg { display: grid; grid-template-columns: repeat(4, minmax(0, 44px)); gap: 6px; width: 100%; }
-  .site-footer__msg a.is-icon { width: auto; min-width: 0; height: auto; aspect-ratio: 1; }
+  .site-footer__msg a.is-icon { width: auto; min-width: 0; height: auto; min-height: 34px; aspect-ratio: 1; align-self: start; }   /* без растягивания — Safari не сплющивает квадрат (правка 2026-10-07) */
 }
 /* 389 и уже (правка 2026-10-07 на 360 — «переверстай»): «Вестлайн» и «Связь» — на всю ширину, кнопка — на всю ширину содержимого;
    «Разделы» и «Документы» — рядом */

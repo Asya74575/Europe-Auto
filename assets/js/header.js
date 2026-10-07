@@ -23,7 +23,7 @@
   }
   var header = document.createElement('header');
   header.className = 'site-header';
-  header.append(link(site.name, 'index.html', 'site-header__name'));
+  header.append(link(site.name, 'index.html#top', 'site-header__name'));   // логотип — к первому экрану главной (правка 2026-10-07); прелоадер при этом не повторяется
   var nav = document.createElement('nav');
   nav.className = 'site-header__nav';
   nav.setAttribute('aria-label', 'Основное меню');

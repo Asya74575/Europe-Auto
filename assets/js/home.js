@@ -6,7 +6,8 @@
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
   var twoCols = matchMedia('(max-width: 1100px)');   // до 1100px сетка из двух колонок
-  var compact = matchMedia('(max-width: 1280px)');   // 1280 и уже — плотнее: окно фото стоянки прижато к верху кадра
+  var compact = matchMedia('(max-width: 1280px)');
+  var phone = matchMedia('(max-width: 767.98px)');   // 767 и уже — фото стоянки обычной картинкой, без остановки (правка 2026-10-07)   // 1280 и уже — плотнее: окно фото стоянки прижато к верху кадра
   var root = document.documentElement;
   var fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
   var NS = 'http://www.w3.org/2000/svg';
@@ -102,94 +103,142 @@
     }
   }
 
-  // ---------- Закрепление и «лестница» (S-2K, правки 2026-10-06) ----------
-  // Кадр останавливается на экране (sticky), следующий блок наезжает на него снизу. Последняя колонна «лестницы» — это край
-  // следующего блока: идёт ровно с прокруткой, поэтому сразу под ней текст и пустого экрана нет. Остальные колонны идут впереди
-  // лесенкой, левая первой. У фото «Откуда машины» сначала окно растёт от колонок 2–3 до всего экрана (data-grow-len, в экранах).
+  // ---------- Смена фона между блоками — как на S-2K (правки 2026-10-06, 2026-10-07) ----------
+  // Механика референса (s-2k.webflow.io, кадры прокрутки 2026-10-07): блок останавливается на экране (sticky), когда виден его низ,
+  // а фон следующего блока поднимается поверх него четырьмя колоннами во всю высоту экрана (до 1100px — двумя), левая первой,
+  // быстрее прокрутки и с мягким торможением, и закрывает кадр целиком; дальше страница идёт как обычно. Белые колонны — перед
+  // светлым блоком, чёрные — перед тёмным. Последняя колонна — край следующего блока: сразу под ней текст, пустого экрана нет.
+  // Так устроены все стыки: первый экран, фото стоянки и каждый блок с [data-edge] (обёртку .pin ставит этот скрипт;
+  // без JS и при reduced motion — прежняя ровная полоса цвета следующего блока). Высота страницы не меняется: следующий блок
+  // наезжает на остановленный ровно на длину остановки. У фото «Откуда машины» сначала окно растёт до всего экрана (data-grow-len).
+  if (!reduce) {
+    Array.prototype.forEach.call(document.querySelectorAll('main > .section > [data-edge]'), function (edge) {
+      var sec = edge.parentElement, pin = document.createElement('div'), space = document.createElement('div'), stair = document.createElement('div');
+      pin.className = 'pin pin--block'; pin.setAttribute('data-pin', '');
+      sec.classList.add('pin__stage'); sec.setAttribute('data-pin-stage', '');
+      stair.className = 'stair ' + (edge.classList.contains('edge--dark') ? 'stair--dark' : 'stair--light');
+      stair.setAttribute('data-stair', ''); stair.setAttribute('aria-hidden', 'true'); stair.innerHTML = '<i></i><i></i><i></i><i></i>';
+      sec.appendChild(stair);
+      space.className = 'pin__space'; space.setAttribute('aria-hidden', 'true');
+      sec.parentNode.insertBefore(pin, sec); pin.appendChild(sec); pin.appendChild(space);
+    });
+  }
   var pinEls = Array.prototype.slice.call(document.querySelectorAll('[data-pin]'));
   if (pinEls.length && !reduce) {
     root.classList.add('js-pin');
     var STAIR_STEP = 0.12, pinVW = 0, pinVH = 0;
+    var headerOffset = parseFloat(getComputedStyle(root).getPropertyValue('--header-offset')) || 88;
     var pins = pinEls.map(function (el) {
-      return { el: el, stage: el.querySelector('[data-pin-stage]'), space: el.querySelector('.pin__space'), cols: el.querySelectorAll('[data-stair] i'),
-        follow: el.nextElementSibling, frame: el.querySelector('[data-grow]'), img: el.querySelector('[data-grow] img'), section: el.closest('.section'),
-        growLen: Number(el.getAttribute('data-grow-len') || 0), top: 0, grow: 0, cover: 0 };
+      var stage = el.querySelector(':scope > [data-pin-stage]'), grows = el.hasAttribute('data-grow-len');
+      return { el: el, stage: stage, space: el.querySelector(':scope > .pin__space'), cols: stage.querySelectorAll(':scope > [data-stair] i'),
+        follow: el.nextElementSibling, frame: grows ? stage.querySelector('[data-grow]') : null, img: grows ? stage.querySelector('[data-grow] img') : null,
+        section: el.closest('.section'), growLen: Number(el.getAttribute('data-grow-len') || 0), hero: el.classList.contains('pin--hero'),
+        flat: false, top: 0, grow: 0, cover: 0, qs: -1, ts: -1 };
     });
+    // остановка: блок выше экрана встаёт, когда виден его низ — пересчёт при любом изменении его высоты (ответы «Вопросов», ленты, шрифты)
+    function pinTops() {
+      pins.forEach(function (p) {
+        if (p.flat) { if (p.stage.style.top) p.stage.style.top = ''; p.top = 0; return; }
+        var t = Math.min(0, pinVH - p.stage.offsetHeight);
+        if (t !== p.top || !p.stage.style.top) { p.top = t; p.stage.style.top = t + 'px'; }
+      });
+    }
     function measurePins() {
       var vw = root.clientWidth, vh = innerHeight;
       // на телефоне высота окна прыгает при скрытии адресной строки — пересчёт только при заметном изменении
-      if (vw === pinVW && Math.abs(vh - pinVH) < 120) return;
-      pinVW = vw; pinVH = vh;
-      pins.forEach(function (p) {
-        p.grow = Math.round(vh * p.growLen); p.cover = vh;
-        p.space.style.height = (p.grow + p.cover) + 'px';
-        if (p.follow) p.follow.style.marginTop = -p.cover + 'px';   // следующий блок наезжает на кадр, пока тот стоит
-        p.top = Math.min(0, vh - p.stage.offsetHeight);             // кадр выше экрана останавливается, когда виден его низ
-        p.stage.style.top = p.top + 'px';
-      });
+      if (vw !== pinVW || Math.abs(vh - pinVH) >= 120 || pins.some(function (p) { return !!p.frame && p.flat !== phone.matches; })) {
+        pinVW = vw; pinVH = vh;
+        pins.forEach(function (p) {
+          // 767 и уже (правка 2026-10-07): окно фото стоянки было полосой под шапкой (небо и деревья) над пустым экраном —
+          // здесь фото обычная картинка 4:3 на всю ширину, без остановки и колонн; картинка мягко отъезжает вслед за прокруткой
+          p.flat = !!p.frame && phone.matches;
+          p.el.classList.toggle('is-flat', p.flat);
+          p.grow = p.flat ? 0 : Math.round(vh * p.growLen); p.cover = p.flat ? 0 : vh;
+          p.space.style.height = (p.grow + p.cover) + 'px';
+          if (p.follow) p.follow.style.marginTop = p.flat ? '' : -p.cover + 'px';   // следующий блок наезжает на кадр, пока тот стоит
+          if (p.flat && p.frame) p.frame.style.clipPath = '';
+        });
+      }
+      pinTops();
     }
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
     var pRaf = 0;
     function pinFrame() {
       pRaf = 0;
-      var vw = root.clientWidth, vh = innerHeight, two = twoCols.matches;
+      var vw = root.clientWidth, vh = innerHeight, two = twoCols.matches, k = two ? 2 : 4, span = 1 - STAIR_STEP * (k - 2), narrow = vw < 768, moving = false;
+      // сначала все замеры, потом все записи — без лишних пересчётов раскладки
       pins.forEach(function (p) {
+        var r = p.stage.getBoundingClientRect();
+        p.vis = r.bottom > -2 && r.top < vh + 2;
+        p.stageTop = r.top; p.H = r.height;
+        p.edgeY = p.follow ? p.follow.getBoundingClientRect().top : vh;
+        if (p.frame && p.vis) p.growT = p.grow ? clamp01((p.top - p.el.getBoundingClientRect().top) / p.grow) : 1;
+      });
+      pins.forEach(function (p) {
+        var q = clamp01((vh - p.edgeY) / vh);
+        // колонны догоняют прокрутку с лёгкой инерцией (около 0,15 с), как у референса; блок вне кадра — сразу на месте
+        if (!p.vis || p.qs < 0) p.qs = q;
+        else { var d = q - p.qs; if (Math.abs(d) > 0.0008) { p.qs += d * 0.2; moving = true; } else p.qs = q; }
+        if (!p.vis) return;
+        if (p.flat) {
+          // картинка отъезжает со 112% до 100%, пока фото проходит экран снизу вверх, — с той же лёгкой инерцией
+          var t = clamp01((vh - p.stageTop) / (vh + p.H));
+          if (p.ts < 0) p.ts = t; else { var dt = t - p.ts; if (Math.abs(dt) > 0.0008) { p.ts += dt * 0.2; moving = true; } else p.ts = t; }
+          if (p.img) p.img.style.transform = 'scale(' + (1.12 - 0.12 * smooth(p.ts)).toFixed(4) + ')';
+          return;
+        }
         if (p.frame) {
           // окно фото: от колонок 2–3 (до 1100px — от полей страницы) до всего экрана
-          var t = p.grow ? clamp01((p.top - p.el.getBoundingClientRect().top) / p.grow) : 1;
           var g = p.section ? parseFloat(getComputedStyle(p.section).paddingLeft) || 0 : 0, col = (vw - 2 * g) / 4;
-          var x0 = two ? g : g + col, w0 = vw - 2 * x0, h0 = Math.min(vh * 0.62, w0 * 0.62), e = smooth(t);
+          var x0 = two ? g : g + col, w0 = vw - 2 * x0, h0 = Math.min(vh * 0.62, w0 * 0.62), e = smooth(p.growT);
           var yT = compact.matches ? 0 : (vh - h0) / 2, yB = vh - h0 - yT;   // сверху и снизу; на 1280 и уже — без пустоты над фото
           p.frame.style.clipPath = 'inset(' + (yT * (1 - e)).toFixed(1) + 'px ' + (x0 * (1 - e)).toFixed(1) + 'px ' + (yB * (1 - e)).toFixed(1) + 'px)';
           if (p.img) p.img.style.transform = 'scale(' + (1.16 - 0.16 * e).toFixed(4) + ')';
         }
-        var stageTop = p.stage.getBoundingClientRect().top, H = p.stage.offsetHeight;
-        var edge = p.follow ? p.follow.getBoundingClientRect().top : vh, q = clamp01((vh - edge) / vh);
-        var k = two ? 2 : 4, span = 1 - STAIR_STEP * (k - 2), narrow = vw < 768;
+        var edge = p.edgeY, qs = p.qs;
         for (var i = 0; i < k; i++) {
-          // 767 и уже (правка 2026-10-07): текст первого экрана — на всю ширину, и левая колонна, обгоняя прокрутку втрое,
-          // закрывала гарантии за 20–30px. Здесь она сначала идёт вместе с краем блока и уходит вперёд плавно, не больше чем на 12% экрана.
-          var y = i === k - 1 ? edge : narrow ? edge - vh * 0.12 * smooth(clamp01(q / 0.5)) : Math.min(edge, vh * (1 - easeOut(clamp01((q - i * STAIR_STEP) / span))));
-          p.cols[i].style.transform = 'translateY(' + Math.max(0, Math.min(H + 2, y - stageTop)).toFixed(1) + 'px)';
+          var y;
+          if (i === k - 1) {
+            // последняя колонна — край следующего блока; под конец уходит вперёд на высоту шапки, чтобы при переходе
+            // по меню под шапкой не оставалась полоска прежнего фона
+            y = edge - headerOffset * smooth(clamp01((qs - 0.5) / 0.4));
+          } else if (narrow && p.hero) {
+            // Первый экран, 767 и уже (правка 2026-10-07): гарантии внизу — на всю ширину, и левая колонна, обгоняя прокрутку втрое,
+            // закрывала их за 20–30px. Здесь она сначала идёт вместе с краем блока и уходит вперёд плавно, не больше чем на 12% экрана.
+            // Остальные стыки на телефоне — как на компьютере (правка 2026-10-07: «на мобильной смена фонов не применилась»).
+            y = edge - vh * 0.12 * smooth(clamp01(qs / 0.5));
+          } else {
+            y = Math.min(edge, vh * (1 - easeOut(clamp01((qs - i * STAIR_STEP) / span))));
+          }
+          p.cols[i].style.transform = 'translateY(' + Math.max(0, Math.min(p.H + 2, y - p.stageTop)).toFixed(1) + 'px)';
         }
       });
+      if (moving) requestPin();
     }
     function requestPin() { if (!pRaf) pRaf = requestAnimationFrame(pinFrame); }
     measurePins(); pinFrame();
     onScroll.push(requestPin);
     addEventListener('resize', function () { measurePins(); requestPin(); });
     addEventListener('load', function () { pinVW = 0; measurePins(); requestPin(); });
-  }
-
-  // ---------- Смена фона между остальными блоками: фон следующего блока поднимается прямоугольниками по колонкам ----------
-  // Прогресс — от прокрутки: 0, когда край блока входит снизу в кадр, 1 — когда он поднялся до 40% высоты экрана.
-  // Колонки стартуют по очереди, направление чередуется; прогресс догоняет прокрутку с инерцией около 0,2 с.
-  var edges = Array.prototype.slice.call(document.querySelectorAll('[data-edge]'));
-  if (edges.length && !reduce) {
-    root.classList.add('js-edges');
-    var curtains = edges.map(function (el, k) {
-      var order = (el.getAttribute('data-order') || (k % 2 ? '3 2 1 0' : '0 1 2 3')).split(' ').map(Number);
-      return { el: el, cols: el.children, order: order, shown: -1, target: 0 };
-    });
-    var STEP = 0.11, SPAN = 1 - STEP * 3, cRaf = 0;
-    function curtainFrame() {
-      var vh = innerHeight, moving = false, two = twoCols.matches;
-      curtains.forEach(function (c) {
-        var b = c.el.getBoundingClientRect().bottom;
-        c.target = clamp01((vh - b) / (vh * 0.6));
-        if (c.shown < 0) c.shown = c.target;   // первый кадр — сразу на месте, без «доезда»
-        var d = c.target - c.shown;
-        if (Math.abs(d) > 0.0008) { c.shown += d * 0.12; moving = true; } else c.shown = c.target;
-        for (var i = 0; i < (two ? 2 : 4); i++) {
-          var slot = two ? (c.order[0] < c.order[3] ? i : 1 - i) * 1.5 : c.order.indexOf(i);
-          var p = smooth(clamp01((c.shown - slot * STEP) / SPAN));
-          c.cols[i].style.transform = 'scaleY(' + p.toFixed(4) + ')';
-        }
-      });
-      cRaf = moving ? requestAnimationFrame(curtainFrame) : 0;
+    if ('ResizeObserver' in window) {
+      var pinRO = new ResizeObserver(function () { pinTops(); requestPin(); });
+      pins.forEach(function (p) { pinRO.observe(p.stage); });
     }
-    onScroll.push(function () { if (!cRaf) cRaf = requestAnimationFrame(curtainFrame); });
-    curtainFrame();
+    // Переход по ссылке на блок этой страницы (меню, логотип, кнопки): у остановленного блока браузер берёт его сдвинутое
+    // положение и не доезжает (с низа страницы логотип вёл не к первому экрану) — место считаем по обёртке .pin, где блок стоит в потоке
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href*="#"]');
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.pathname !== location.pathname || a.search !== location.search || a.hash.length < 2) return;
+      var el = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+      var stage = el && el.closest('[data-pin-stage]');
+      if (!stage || !stage.parentElement.hasAttribute('data-pin')) return;   // обычный блок — обычный переход
+      e.preventDefault();
+      var pad = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+      var y = stage.parentElement.getBoundingClientRect().top + (el.getBoundingClientRect().top - stage.getBoundingClientRect().top);
+      scrollTo({ top: Math.max(0, Math.round(scrollY + y - pad - margin)), behavior: 'smooth' });
+      if (location.hash !== a.hash) history.pushState(null, '', a.hash);
+    });
   }
 
   // ---------- Строка стран, вариант 2: линия маршрута идёт от Германии к Минску вслед за прокруткой ----------
@@ -234,7 +283,8 @@
   if (voicesBox) {
     var vs = document.createElement('div');
     vs.className = 'slider voice-slider';
-    vs.setAttribute('data-slider', ''); vs.setAttribute('aria-roledescription', 'карусель'); vs.setAttribute('aria-label', 'Отзывы клиентов');
+    // по кругу и сама листает каждые 5 с, пока лента в кадре (правка 2026-10-07: «бесконечная плавная прокрутка» — ответ владельца «по кругу + сама листает»)
+    vs.setAttribute('data-slider', ''); vs.setAttribute('data-loop', ''); vs.setAttribute('data-autoplay', '5000'); vs.setAttribute('aria-roledescription', 'карусель'); vs.setAttribute('aria-label', 'Отзывы клиентов');
     vs.innerHTML = '<div class="slider__view" tabindex="0"><div class="slider__track"></div></div>' +
       '<div class="slider__bar"><p class="slider__count caption" aria-live="polite"><b data-slider-now>01</b> / <span data-slider-total>05</span></p>' +
       '<span class="slider__progress" aria-hidden="true"><i data-slider-progress></i></span>' +
@@ -254,43 +304,94 @@
   // ---------- Карусели (правка 2026-10-06): лента двигается своим движением, без прокрутки внутри блока ----------
   // Тянуть мышью (курсор-круг «Листать») или пальцем, колесо/тачпад вбок, стрелки и клавиши ← →; отпускание — с инерцией
   // и привязкой к карточке. Вертикальное колесо не перехватывается — страница не «стопорится».
+  // Листание стрелками и после броска — 0,9 с с тем же торможением, что всё движение сайта (правка 2026-10-07: «плавно и одинаково»).
+  // data-loop — лента по кругу: копии карточек слева и справа, после листания позиция незаметно возвращается в середину.
+  // data-autoplay — сама листает раз в N мс, пока лента в кадре и её не трогают; после жеста — пауза и снова сама.
+  var slideEase = function (t) { return 1 - Math.pow(1 - t, 5); };   // ≈ cubic-bezier(.22, 1, .36, 1) — --ease
   document.querySelectorAll('[data-slider]').forEach(function (slider) {
     var view = slider.querySelector('.slider__view'), track = slider.querySelector('.slider__track'), items = Array.prototype.slice.call(track.children);
     var nowEl = slider.querySelector('[data-slider-now]'), totalEl = slider.querySelector('[data-slider-total]'), bar = slider.querySelector('[data-slider-progress]');
     var prev = slider.querySelector('[data-slider-prev]'), next = slider.querySelector('[data-slider-next]'), cursor = slider.querySelector('.slider__cursor');
-    var x = 0, target = 0, step = 1, perView = 1, maxIndex = 0, index = 0, raf = 0, viewW = 1;
+    var loop = slider.hasAttribute('data-loop'), n = items.length, base = 0;
+    if (loop) {
+      // две копии: перед лентой и после неё; для чтения с экрана и клавиатуры — только настоящие карточки
+      var before = document.createDocumentFragment(), after = document.createDocumentFragment();
+      items.forEach(function (it) {
+        [before, after].forEach(function (f) {
+          var c = it.cloneNode(true); c.setAttribute('aria-hidden', 'true'); c.setAttribute('inert', '');
+          c.querySelectorAll('[id]').forEach(function (e) { e.removeAttribute('id'); });
+          f.appendChild(c);
+        });
+      });
+      track.insertBefore(before, track.firstChild); track.appendChild(after);
+      items = Array.prototype.slice.call(track.children); base = n;
+    }
+    var x = 0, target = 0, step = 1, perView = 1, maxIndex = 0, index = base, raf = 0, viewW = 1, tw = null;
     function pad(v) { return (v < 10 ? '0' : '') + v; }
-    function limit(v) { return Math.max(0, Math.min(maxIndex * step, v)); }
+    function real(k) { return ((k - base) % n + n) % n; }
+    function limit(v) { return loop ? v : Math.max(0, Math.min(maxIndex * step, v)); }
     function measure() {
       viewW = view.clientWidth; step = items[0].getBoundingClientRect().width || 1;
-      perView = Math.max(1, Math.round(viewW / step)); maxIndex = Math.max(0, items.length - perView);
-      index = Math.min(index, maxIndex); x = target = index * step; render(); status();
+      perView = Math.max(1, Math.round(viewW / step)); maxIndex = loop ? Infinity : Math.max(0, items.length - perView);
+      if (loop) index = base + real(index); else index = Math.min(index, maxIndex);
+      cancelAnimationFrame(raf); raf = 0; tw = null;
+      x = target = index * step; render(); status();
     }
     function render() {
       track.style.transform = 'translate3d(' + (-x).toFixed(2) + 'px,0,0)';
-      if (bar) bar.style.transform = 'scaleX(' + Math.min(1, (x + viewW) / (items.length * step)).toFixed(4) + ')';
+      if (bar) bar.style.transform = 'scaleX(' + (loop ? Math.min(1, (real(Math.round(x / step)) + perView) / n) : Math.min(1, (x + viewW) / (items.length * step))).toFixed(4) + ')';
     }
     function status() {
-      if (nowEl) nowEl.textContent = perView > 1 ? pad(index + 1) + '–' + pad(Math.min(items.length, index + perView)) : pad(index + 1);
-      if (totalEl) totalEl.textContent = pad(items.length);
-      prev.disabled = index <= 0; next.disabled = index >= maxIndex;
+      var r = loop ? real(index) : index, last = loop ? real(index + perView - 1) : Math.min(items.length, index + perView) - 1;
+      if (nowEl) nowEl.textContent = perView > 1 ? pad(r + 1) + '–' + pad(last + 1) : pad(r + 1);
+      if (totalEl) totalEl.textContent = pad(n);
+      prev.disabled = !loop && index <= 0; next.disabled = !loop && index >= maxIndex;
     }
-    function animate() {
-      var d = target - x;
-      if (Math.abs(d) < 0.4) { x = target; raf = 0; render(); return; }
-      x += d * 0.12; render();
-      raf = requestAnimationFrame(animate);
+    // по кругу: позиция в копиях → такая же в середине (картинка та же, сдвиг не виден)
+    function recenter() {
+      if (!loop) return;
+      var shift = index < base ? n : index >= base + n ? -n : 0;
+      if (!shift) return;
+      index += shift; x += shift * step; target += shift * step;
+      if (tw) { tw.from += shift * step; tw.to += shift * step; }
+      render();
+    }
+    function animate(now) {
+      if (tw) {
+        var t = Math.min(1, (now - tw.t0) / 900);
+        x = tw.from + (tw.to - tw.from) * slideEase(t);
+        if (t >= 1) { tw = null; x = target; }
+      } else {
+        var d = target - x;   // колесо вбок: позиция догоняет жест
+        if (Math.abs(d) < 0.4) x = target; else x += d * 0.12;
+      }
+      render();
+      if (tw || Math.abs(target - x) >= 0.4) { raf = requestAnimationFrame(animate); return; }
+      x = target; raf = 0; render(); recenter();
     }
     function goTo(k) {
-      index = Math.max(0, Math.min(maxIndex, k)); target = index * step; status();
-      if (reduce) { x = target; render(); return; }
+      var was = index;
+      recenter(); k += index - was;   // позиция могла вернуться в середину — шаг тот же
+      index = loop ? k : Math.max(0, Math.min(maxIndex, k)); target = index * step; status();
+      if (reduce) { x = target; render(); recenter(); return; }
+      tw = { from: x, to: target, t0: performance.now() };
       if (!raf) raf = requestAnimationFrame(animate);
     }
-    prev.addEventListener('click', function () { goTo(index - 1); });
-    next.addEventListener('click', function () { goTo(index + 1); });
+    // сама листает: только пока лента в кадре, вкладка открыта и никто её не трогает
+    var autoMs = Number(slider.getAttribute('data-autoplay')) || 0, autoTimer = 0, inView = false, held = false;
+    function autoNext() { autoTimer = 0; if (inView && !held && !document.hidden && view.offsetParent) goTo(index + 1); planAuto(); }
+    function planAuto() { clearTimeout(autoTimer); autoTimer = autoMs && !reduce && inView ? setTimeout(autoNext, autoMs) : 0; }
+    if (autoMs && !reduce && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) { es.forEach(function (e) { inView = e.isIntersecting; planAuto(); }); }, { threshold: 0.5 }).observe(view);
+      slider.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') held = true; });
+      slider.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { held = false; planAuto(); } });
+      document.addEventListener('visibilitychange', planAuto);
+    }
+    prev.addEventListener('click', function () { goTo(index - 1); planAuto(); });
+    next.addEventListener('click', function () { goTo(index + 1); planAuto(); });
     view.addEventListener('keydown', function (e) {
-      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(index + 1); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(index - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(index + 1); planAuto(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(index - 1); planAuto(); }
     });
     addEventListener('resize', measure);
     addEventListener('load', measure);
@@ -301,10 +402,10 @@
     view.addEventListener('wheel', function (e) {
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < 1) return;
       e.preventDefault();
-      target = limit(target + e.deltaX);
+      tw = null; target = limit(target + e.deltaX);
       if (!raf) raf = requestAnimationFrame(animate);
       clearTimeout(wheelTimer);
-      wheelTimer = setTimeout(function () { goTo(Math.round(target / step)); }, 160);
+      wheelTimer = setTimeout(function () { goTo(Math.round(target / step)); planAuto(); }, 160);
     }, { passive: false });
 
     // Перетаскивание мышью и пальцем (pointer events; touch-action: pan-y оставляет вертикаль странице)
@@ -312,6 +413,8 @@
     view.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       down = true; dragging = false; pid = e.pointerId;
+      if (autoMs) { held = true; clearTimeout(autoTimer); }
+      if (loop) { cancelAnimationFrame(raf); raf = 0; tw = null; index = Math.round(x / step); target = x; recenter(); }   // лента останавливается под пальцем
       startX = lastX = e.clientX; startY = e.clientY; startPos = x; lastT = performance.now(); vel = 0;
       if (e.pointerType === 'mouse') e.preventDefault();   // без выделения текста и перетаскивания картинок
     });
@@ -320,21 +423,22 @@
       var dx = e.clientX - startX, dy = e.clientY - startY;
       if (!dragging) {
         if (Math.abs(dx) < 6) return;
-        if (Math.abs(dy) > Math.abs(dx)) { down = false; return; }   // вертикальный жест — прокрутка страницы
+        if (Math.abs(dy) > Math.abs(dx)) { down = false; if (autoMs) { held = false; planAuto(); } if (loop && !raf) goTo(index); return; }   // вертикальный жест — прокрутка страницы
         dragging = true; slider.classList.add('is-dragging');
         try { view.setPointerCapture(pid); } catch (err) {}
       }
       var pos = startPos - dx, max = maxIndex * step;
-      if (pos < 0) pos *= 0.35; else if (pos > max) pos = max + (pos - max) * 0.35;   // у края — с сопротивлением
+      if (!loop) { if (pos < 0) pos *= 0.35; else if (pos > max) pos = max + (pos - max) * 0.35; }   // у края — с сопротивлением (по кругу края нет)
       var now = performance.now();
       vel = 0.8 * vel + 0.2 * ((e.clientX - lastX) / Math.max(1, now - lastT));
       lastX = e.clientX; lastT = now;
       x = target = pos; render();
     });
-    function release() {
+    function release(e) {
+      if (autoMs && !(e && e.pointerType === 'mouse' && slider.matches(':hover'))) { held = false; planAuto(); }
       if (!down) return;
       down = false;
-      if (!dragging) return;
+      if (!dragging) { if (loop && !raf) goTo(index); return; }   // остановили касанием — докатывается до карточки
       dragging = false; slider.classList.remove('is-dragging');
       var projected = x - vel * 240, k = Math.round(projected / step);
       k = Math.max(index - perView, Math.min(index + perView, k));   // за один бросок — не дальше одного экрана
@@ -520,6 +624,35 @@
       toOrder();
     });
   });
+
+  // ---------- Вопросы: ответ раскрывается и закрывается плавно, 0,8 с с тем же торможением, что всё движение сайта
+  // (правка 2026-10-07: «аккордеон открывается очень резко» — анимация высоты через CSS работала не во всех браузерах) ----------
+  if (!reduce && Element.prototype.animate) {
+    document.querySelectorAll('.faq__list details').forEach(function (d) {
+      var summary = d.querySelector('summary'), answer = d.querySelector('p'), anim = null;
+      function run(from, to, done) {
+        if (anim) anim.cancel();
+        d.classList.add('is-animating');
+        anim = d.animate({ height: [from + 'px', to + 'px'] }, { duration: 800, easing: 'cubic-bezier(.22, 1, .36, 1)' });
+        if (answer) answer.animate({ opacity: done ? [1, 0] : [0, 1] }, { duration: done ? 500 : 800, easing: 'cubic-bezier(.22, 1, .36, 1)', fill: 'none' });
+        anim.onfinish = function () { anim = null; d.classList.remove('is-animating', 'is-closing'); if (done) done(); };
+      }
+      summary.addEventListener('click', function (e) {
+        e.preventDefault();
+        var from = d.offsetHeight;
+        if (d.open && !d.classList.contains('is-closing')) {
+          d.classList.add('is-closing');
+          run(from, summary.offsetHeight + (d.offsetHeight - d.clientHeight), function () { d.open = false; });
+        } else {
+          d.classList.remove('is-closing');
+          d.open = true;
+          if (anim) { anim.cancel(); anim = null; }
+          d.classList.remove('is-animating');
+          run(from, d.offsetHeight);
+        }
+      });
+    });
+  }
 
   // ---------- «Почему Вестлайн»: слова подсвечиваются по мере прокрутки (S-2K) ----------
   var para = document.querySelector('[data-words]');

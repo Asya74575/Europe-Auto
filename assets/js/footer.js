@@ -14,7 +14,11 @@
   var inner = el('div', 'site-footer__inner');
 
   var brand = el('div', 'site-footer__brand');
-  brand.append(el('p', 'site-footer__head', site.name || ''));   // все колонки начинаются одинаково: подпись под общей линией (правка 2026-10-06)
+  // все колонки начинаются одинаково: подпись под общей линией (правка 2026-10-06); у «Вестлайн» это ссылка на первый экран главной (правка 2026-10-07)
+  var home = local('index.html#top');
+  var head = el('p', 'site-footer__head');
+  head.append(link(site.name || '', home, 'site-footer__home'));
+  brand.append(head);
   if (site.tagline) brand.append(el('p', 'site-footer__tagline', site.tagline));
   if (site.cta && local(site.cta.href)) brand.append(link(site.cta.label, local(site.cta.href), 'button'));
   inner.append(brand);
@@ -52,8 +56,8 @@
   inner.append(bottom);
   footer.append(inner);
 
-  var word = el('p', 'site-footer__word', site.name || '');
-  word.setAttribute('aria-hidden', 'true');
+  var word = link(site.name || '', home, 'site-footer__word');   // логотип во всю ширину — ссылка на первый экран главной (правка 2026-10-07)
+  word.setAttribute('aria-label', (site.name || '') + ' — на главную');
   footer.append(word);
   mount.replaceChildren(footer);
 })();

@@ -18,11 +18,13 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Сколько ждать машину?","acceptedAnswer":{"@type":"Answer","text":"От подписи в договоре до номеров — 3–5 недель. Сама дорога на автовозе из Европы до Минска занимает 5–10 дней, остальное время уходит на поиск, проверку, выкуп и оформление."}},{"@type":"Question","name":"Как понять, что пробег не скручен?","acceptedAnswer":{"@type":"Answer","text":"Мы сверяем пробег с историей обслуживания и проверяем машину по базам и VIN. В пакетах «Под ключ» ещё осматриваем её на месте и присылаем фотоотчёт — 60+ фото и видео. Вы видите машину до оплаты, а не после."}},{"@type":"Question","name":"Какие машины выгоднее всего везти из Европы?","acceptedAnswer":{"@type":"Answer","text":"Машины 2–7 лет от лизинговых и прокатных компаний, официальных дилеров и с онлайн-аукционов: пробег у них подтверждён историей обслуживания. Под ключ такая машина в среднем на 15–20% дешевле такой же на рынке Беларуси. Модель и комплектацию подберём под ваш бюджет."}},{"@type":"Question","name":"Из каких стран везёте?","acceptedAnswer":{"@type":"Answer","text":"Из семи: Германия, Польша, Литва, Бельгия, Нидерланды, Франция и Швеция. Откуда бы ни ехала машина, финиш один — Минск."}},{"@type":"Question","name":"Что входит в цену услуги?","acceptedAnswer":{"@type":"Answer","text":"«Подбор», 450 €: находим машину, проверяем по базам, выкупаем и довозим до СВХ в Минске. «Под ключ», 650 €: плюс осмотр на месте с фотоотчётом, растаможка и учёт в ГАИ. «Под ключ + гарантия», 850 €: плюс техническая гарантия. Цена услуги не зависит от цены машины."}},{"@type":"Question","name":"На что действует гарантия?","acceptedAnswer":{"@type":"Answer","text":"Техническая гарантия — 60 дней или 5000 км на двигатель, КПП и подвеску, она входит в пакет «Под ключ + гарантия». Сцепление, маховик, тормозные колодки и диски в неё не входят."}},{"@type":"Question","name":"Что, если найдётся дефект, о котором не предупредили?","acceptedAnswer":{"@type":"Answer","text":"Вернём стоимость услуги — если у машины найдётся дефект, которого нет в отчёте осмотра. Так что отчёт мы пишем подробно и без «косметики»."}},{"@type":"Question","name":"Как платить за услугу?","acceptedAnswer":{"@type":"Answer","text":"Только по договору. Сначала подписываем его, потом вы оплачиваете услугу на счёт компании — не на карту менеджеру и не наличными «на руки»."}}]}</script>
 <!-- seo:end -->
 <link rel="stylesheet" href="assets/css/tokens.css">
-<link rel="stylesheet" href="assets/css/base.css?v=2026-10-07e">
+<link rel="stylesheet" href="assets/css/base.css?v=2026-10-07g">
 <link rel="stylesheet" href="assets/css/reveal.css">
-<link rel="stylesheet" href="assets/css/home.css?v=2026-10-07e">
-<!-- Прелоадер включается только при работающем JS и без reduced motion; страховка — снять через 8 с, даже если скрипт не загрузился -->
-<script>if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('is-preloading'); setTimeout(function () { var c = document.documentElement.classList; if (c.contains('is-preloading')) { c.remove('is-preloading'); dispatchEvent(new Event('preloader:done')); } }, 8000); }</script>
+<link rel="stylesheet" href="assets/css/home.css?v=2026-10-07i">
+<!-- Прелоадер включается только при работающем JS и без reduced motion и только один раз за визит (правка 2026-10-07: показывался
+     при каждом переходе на главную, в том числе по логотипу); страховка — снять через 8 с, даже если скрипт не загрузился -->
+<script>var wlSeen = false; try { wlSeen = sessionStorage.getItem('wl-preloaded') === '1'; sessionStorage.setItem('wl-preloaded', '1'); } catch (e) {}
+if (!wlSeen && !matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('is-preloading'); setTimeout(function () { var c = document.documentElement.classList; if (c.contains('is-preloading')) { c.remove('is-preloading'); dispatchEvent(new Event('preloader:done')); } }, 8000); }</script>
 </head>
 <body class="home">
 <!-- Прелоадер: одометр первого экрана — шкала заполняется по мере загрузки, километры набегают до 068 420; уходит вверх колоннами по сетке -->
@@ -412,13 +414,13 @@
 <div data-include="footer"><footer class="site-footer"><div class="site-footer__inner"><div class="site-footer__brand"><p class="site-footer__name">Вестлайн</p><a class="button" href="#order">Заказать подбор</a></div><div class="site-footer__col"><a href="legal/privacy.html">Политика конфиденциальности</a><a href="legal/consent.html">Согласие на обработку данных</a><a href="legal/cookies.html">Cookie</a></div></div></footer></div>
 
 <script src="assets/js/config.js"></script>
-<script src="assets/js/header.js"></script>
+<script src="assets/js/header.js?v=2026-10-07f"></script>
 <script src="assets/js/header-stick.js"></script>
 <script src="assets/js/icons.js"></script>
-<script src="assets/js/footer.js"></script>
+<script src="assets/js/footer.js?v=2026-10-07f"></script>
 <script src="assets/js/form-demo.js"></script>
 <script src="assets/js/reveal.js"></script>
 <script src="assets/js/preloader.js"></script>
-<script src="assets/js/home.js?v=2026-10-07e"></script>
+<script src="assets/js/home.js?v=2026-10-07g"></script>
 </body>
 </html>

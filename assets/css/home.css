@@ -11,9 +11,9 @@ html.is-preloading, html.is-preloading body { overflow: hidden; }
 .preloader__cols i:not(:last-child) { margin-right: -1px; }
 .preloader__cols i:nth-child(2) { transition-delay: .07s; } .preloader__cols i:nth-child(3) { transition-delay: .14s; } .preloader__cols i:nth-child(4) { transition-delay: .21s; }
 .preloader.is-out .preloader__cols i { transform: translateY(-101%); }
-.preloader__odo { position: relative; z-index: 1; width: min(78vw, 380px); transition: opacity .6s var(--ease), transform .8s var(--ease); }
+.preloader__odo { position: relative; z-index: 1; width: min(78vw, 380px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
 .preloader__odo .odo__digits { font-size: clamp(32px, 3.4vw, 46px); }
-.preloader__odo .odo__label { font-size: 14px; transition: color .5s var(--ease); }
+.preloader__odo .odo__label { font-size: 14px; transition: color .8s var(--ease); }
 .preloader.is-done .odo__label { color: var(--color-text-on-dark); }
 .preloader.is-out .preloader__odo { opacity: 0; transform: translateY(-48px); }
 @media (max-width: 1100px) { .preloader__cols { --col: calc((100% - 2 * var(--gutter)) / 2); grid-template-columns: calc(var(--gutter) + var(--col)) calc(var(--gutter) + var(--col)); } .preloader__cols i:nth-child(n+3) { display: none; } }
@@ -88,7 +88,13 @@ html.is-preloading, html.is-preloading body { overflow: hidden; }
 .js-pin .source__photo img { will-change: transform; }
 .js-pin .pin--photo { margin-bottom: 0; }
 .js-pin .pin--photo + .wrap { padding-top: var(--space-4); }   /* наезд на кадр (отрицательный отступ сверху) ставит home.js */
-.js-pin .pin--hero + .section { scroll-margin-top: calc(-1 * var(--header-offset)); }   /* по пункту меню «Откуда» — блок от самого верха: первый экран закрыт целиком */
+/* 767 и уже (правка 2026-10-07: «открывается странно и коряво»): фото — обычная картинка 4:3 на всю ширину, в кадре ряд машин;
+   без остановки, роста окна и колонн. Класс .is-flat ставит home.js, он же ведёт мягкий отъезд картинки за прокруткой. */
+.js-pin .pin--photo.is-flat .source__photo { position: relative; height: auto; aspect-ratio: 4 / 3; }
+.js-pin .pin--photo.is-flat :is(.stair, .pin__space) { display: none; }
+.js-pin .pin--photo.is-flat .source__frame { will-change: auto; }
+.pin--photo.is-flat .source__photo img { object-position: 20% 50%; transform-origin: 30% 62%; }
+.js-pin #source { scroll-margin-top: calc(-1 * var(--header-offset)); }   /* по пункту меню «Откуда» — блок от самого верха: первый экран закрыт целиком */
 .source__list { list-style: none; margin: 0 0 var(--space-5); padding: 0; }
 .source__list li { max-width: none; padding-right: var(--space-4); }
 .source__i { display: block; margin-bottom: var(--space-3); font-weight: 600; font-size: var(--text-caption); letter-spacing: var(--caption-tracking); color: var(--color-accent); }
@@ -119,8 +125,8 @@ html.is-preloading, html.is-preloading body { overflow: hidden; }
 .how__total { margin: 0 0 var(--space-5); max-width: 26em; font-size: var(--text-lead); line-height: 1.4; color: rgb(248 248 248 / .8); background: var(--bg); }
 .how__total b { color: var(--color-text-on-dark); font-weight: 600; }
 .how__toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; color: rgb(248 248 248 / .5); }
-.how__toc li { position: relative; padding-left: 22px; transition: color .6s var(--ease); }
-.how__toc li::before { content: ""; position: absolute; left: 0; top: 50%; width: 12px; height: 1px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; transition: transform .6s var(--ease); }
+.how__toc li { position: relative; padding-left: 22px; transition: color .8s var(--ease); }
+.how__toc li::before { content: ""; position: absolute; left: 0; top: 50%; width: 12px; height: 1px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; transition: transform .8s var(--ease); }
 .how__toc li.is-now { color: var(--color-text-on-dark); }
 .how__toc li.is-now::before { transform: scaleX(1); }
 .how__steps { grid-column: 3 / 5; list-style: none; margin: 0; padding: 0; }
@@ -152,7 +158,7 @@ html.is-preloading, html.is-preloading body { overflow: hidden; }
 .slider__btn { display: grid; place-items: center; width: 64px; height: 52px; border: 0; border-radius: var(--radius); background: transparent; color: inherit; font-size: 30px; line-height: 1; cursor: pointer; transition: color var(--transition-soft) var(--ease), transform var(--transition-soft) var(--ease); }
 .slider__btn:disabled { opacity: .25; cursor: default; }
 /* Курсор-круг «Листать» (Hispano Suiza) — только мышь; при нажатии растёт и становится акцентным */
-.slider__cursor { position: absolute; left: 0; top: 0; z-index: 5; display: none; place-items: center; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; background: var(--color-dark); color: var(--color-text-on-dark); font-weight: 600; font-size: 12px; letter-spacing: var(--caption-tracking); text-transform: uppercase; pointer-events: none; opacity: 0; transition: opacity .4s var(--ease), background-color .4s var(--ease); }
+.slider__cursor { position: absolute; left: 0; top: 0; z-index: 5; display: none; place-items: center; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; background: var(--color-dark); color: var(--color-text-on-dark); font-weight: 600; font-size: 12px; letter-spacing: var(--caption-tracking); text-transform: uppercase; pointer-events: none; opacity: 0; transition: opacity .5s var(--ease), background-color .5s var(--ease); }
 .slider__cursor span { transition: transform .5s var(--ease); }
 .slider.has-cursor .slider__cursor { display: grid; }
 .slider.has-cursor .slider__view { cursor: none; }
@@ -272,9 +278,9 @@ th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
 .voices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
 .voices__tabs { grid-column: 1 / 3; list-style: none; margin: 0; padding: 0 var(--space-5) 0 0; background: var(--bg); }
 .voices__tabs li { max-width: none; }
-.voices__tab { position: relative; display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 16px; width: 100%; padding: 18px 0; border: 0; border-top: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; text-align: left; cursor: pointer; transition: color .6s var(--ease); }
+.voices__tab { position: relative; display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 16px; width: 100%; padding: 18px 0; border: 0; border-top: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; text-align: left; cursor: pointer; transition: color .8s var(--ease); }
 .voices__tabs li:last-child .voices__tab { border-bottom: 1px solid var(--line); }
-.voices__num { font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: .8; transition: color .6s var(--ease); }
+.voices__num { font-family: var(--font-heading); font-weight: 600; font-size: 44px; line-height: .8; transition: color .8s var(--ease); }
 .voices__who { display: grid; gap: 2px; font-size: 15px; line-height: 1.35; }
 .voices__who b { font-weight: 600; font-size: 18px; }
 .voices__tab.is-on { color: var(--color-text); }
@@ -319,15 +325,11 @@ th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
 .faq__list summary { position: relative; padding: 24px 56px 24px 0; font-weight: 500; font-size: clamp(20px, 1.6vw, 25px); line-height: 1.3; list-style: none; cursor: pointer; }
 .faq__list summary::-webkit-details-marker { display: none; }
 /* «+» — тонкий крестик 18px из двух линий (правка 2026-10-06: был слишком крупный) */
-.faq__list summary::after { content: ""; position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; background: linear-gradient(currentColor, currentColor) 50% 50% / 100% 1.5px no-repeat, linear-gradient(currentColor, currentColor) 50% 50% / 1.5px 100% no-repeat; transition: transform .6s var(--ease), color .6s var(--ease); }
-.faq__list details[open] summary::after { transform: rotate(45deg); color: var(--color-accent); }
+.faq__list summary::after { content: ""; position: absolute; right: 10px; top: 50%; width: 18px; height: 18px; margin-top: -9px; background: linear-gradient(currentColor, currentColor) 50% 50% / 100% 1.5px no-repeat, linear-gradient(currentColor, currentColor) 50% 50% / 1.5px 100% no-repeat; transition: transform .8s var(--ease), color .8s var(--ease); }
+.faq__list details[open]:not(.is-closing) summary::after { transform: rotate(45deg); color: var(--color-accent); }
 .faq__list details p { margin: 0; padding: 0 56px 26px 0; color: rgb(248 248 248 / .78); }
-/* Плавное раскрытие там, где браузер умеет анимировать высоту до auto */
-@supports (interpolate-size: allow-keywords) {
-  .faq__list { interpolate-size: allow-keywords; }
-  .faq__list details::details-content { height: 0; overflow: clip; transition: height .7s var(--ease), content-visibility .7s allow-discrete; }
-  .faq__list details[open]::details-content { height: auto; }
-}
+/* Ответ раскрывается и закрывается плавно во всех браузерах (правка 2026-10-07: «открывается резко»): высоту ведёт home.js, 0,8 с, --ease */
+.faq__list details.is-animating { overflow: hidden; }
 
 /* ---------- 10. Заявка ---------- */
 .order__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; }
@@ -347,6 +349,11 @@ th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
 .order__panel a { color: inherit; }
 .order__panel [data-form-status] { color: rgb(248 248 248 / .88); }
 .order__panel [data-form-status] { font-weight: 600; }
+/* Компьютер: панель по высоте формы, а не левой колонки (правка 2026-10-07: под кнопкой было до 330px пустоты) */
+@media not all and (max-width: 1100px) { .order__panel { align-self: start; } }   /* встык с «1100 и уже» — без щели на дробной ширине (125 %) */
+/* Компьютер (правка 2026-10-07): форма едет вместе с прокруткой под шапкой до конца блока — до низа левой колонки.
+   Только в окне от 720px высотой: форма ~630px + шапка 88px, в окне ниже кнопка «Отправить» уходила бы за край. */
+@media not all and (max-width: 1100px) { @media (min-height: 720px) { .order__panel { position: sticky; top: var(--header-offset); } } }
 
 /* ---------- Наведение — только мышь ---------- */
 @media (hover: hover) {
@@ -545,8 +552,10 @@ th.is-main .tariff__price, th.is-main .tariff__i { color: var(--color-accent); }
   .order__contacts div:last-child { border-bottom: 0; }
   .order__contacts .order__phone { font-size: min(28px, 7vw); white-space: nowrap; }
   .order__msg .contacts { display: grid; grid-template-columns: repeat(4, minmax(0, 44px)); gap: 6px; }
-  .order__msg .contacts li { display: flex; }
-  .order__msg .contacts__link.is-icon { width: 100%; min-height: 0; aspect-ratio: 1; padding: 0; justify-content: center; }
+  /* квадрат — блочный элемент с aspect-ratio, без растягивания во flex-ячейке: в Safari растянутая ячейка сплющивала его
+     (правка 2026-10-07); min-height — запас для Safari без aspect-ratio */
+  .order__msg .contacts li { display: block; min-width: 0; }
+  .order__msg .contacts__link.is-icon { display: flex; align-items: center; width: 100%; height: auto; min-height: 34px; aspect-ratio: 1; padding: 0; justify-content: center; }
   .order__panel { padding: 20px 16px; }
   .order__panel .form { grid-template-columns: 1fr 1fr; gap: 12px; }   /* имя и телефон — в одну строку (правка 2026-10-07) */
   .order__panel .form input { min-width: 0; padding-inline: 12px; }   /* маска «+375 __ ___-__-__» помещается в половину строки до 360px */
