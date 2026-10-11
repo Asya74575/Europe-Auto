@@ -135,11 +135,22 @@
         section: el.closest('.section'), growLen: Number(el.getAttribute('data-grow-len') || 0), hero: el.classList.contains('pin--hero'),
         flat: false, top: 0, grow: 0, cover: 0, qs: -1, ts: -1 };
     });
+    // обёртка — цвета своего блока: если блок ниже экрана и остановлен низом к низу, над ним виден его же фон
+    pins.forEach(function (p) {
+      var bg = getComputedStyle(p.stage).backgroundColor;
+      if (!p.frame && bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') p.el.style.backgroundColor = bg;
+    });
     // остановка: блок выше экрана встаёт, когда виден его низ — пересчёт при любом изменении его высоты (ответы «Вопросов», ленты, шрифты)
+    // Высота — текущая высота окна, а не запомненная при загрузке (pinVH): на телефоне адресная строка прячется при прокрутке,
+    // экран становится выше на 60–100px, и блок останавливался на эту величину выше низа — в щель во всю ширину был виден
+    // следующий блок (правка 2026-10-11: «в мобилке баг есть»). Длина остановки (pinVH) не меняется — страница не прыгает.
+    // Блок ниже экрана («Отзывы» на телефоне, часть блоков на планшете) тоже встаёт низом к низу экрана, а не к верху:
+    // иначе под ним оставалась щель, в которой виден следующий блок. Над ним — обёртка цвета блока (фон ставится ниже).
     function pinTops() {
+      var vh = innerHeight;
       pins.forEach(function (p) {
         if (p.flat) { if (p.stage.style.top) p.stage.style.top = ''; p.top = 0; return; }
-        var t = Math.min(0, pinVH - p.stage.offsetHeight);
+        var t = p.frame ? Math.min(0, vh - p.stage.offsetHeight) : vh - p.stage.offsetHeight;
         if (t !== p.top || !p.stage.style.top) { p.top = t; p.stage.style.top = t + 'px'; }
       });
     }
@@ -157,6 +168,12 @@
           p.space.style.height = (p.grow + p.cover) + 'px';
           if (p.follow) p.follow.style.marginTop = p.flat ? '' : -p.cover + 'px';   // следующий блок наезжает на кадр, пока тот стоит
           if (p.flat && p.frame) p.frame.style.clipPath = '';
+          // x-границы колонн (только видимых: на 1100 и уже их две) — для окон следующего блока, см. pinFrame
+          if (p.follow && !p.frame) {
+            var fl = p.follow.getBoundingClientRect().left;
+            var rs = Array.prototype.filter.call(p.cols, function (c) { return c.getBoundingClientRect().width > 0; }).map(function (c) { return c.getBoundingClientRect(); });
+            p.bx = rs.length ? [rs[0].left - fl].concat(rs.map(function (r) { return r.right - fl; })) : null;
+          }
         });
       }
       pinTops();
@@ -170,7 +187,7 @@
       pins.forEach(function (p) {
         var r = p.stage.getBoundingClientRect();
         p.vis = r.bottom > -2 && r.top < vh + 2;
-        p.stageTop = r.top; p.H = r.height;
+        p.stageTop = r.top; p.H = r.height; p.sb = r.bottom;
         p.edgeY = p.follow ? p.follow.getBoundingClientRect().top : vh;
         if (p.frame && p.vis) p.growT = p.grow ? clamp01((p.top - p.el.getBoundingClientRect().top) / p.grow) : 1;
       });
@@ -179,7 +196,7 @@
         // колонны догоняют прокрутку с лёгкой инерцией (около 0,15 с), как у референса; блок вне кадра — сразу на месте
         if (!p.vis || p.qs < 0) p.qs = q;
         else { var d = q - p.qs; if (Math.abs(d) > 0.0008) { p.qs += d * 0.2; moving = true; } else p.qs = q; }
-        if (!p.vis) return;
+        if (!p.vis) { if (p.follow && p.follow.style.clipPath) p.follow.style.clipPath = ''; return; }
         if (p.flat) {
           // картинка отъезжает со 112% до 100%, пока фото проходит экран снизу вверх, — с той же лёгкой инерцией
           var t = clamp01((vh - p.stageTop) / (vh + p.H));
@@ -196,21 +213,56 @@
           if (p.img) p.img.style.transform = 'scale(' + (1.16 - 0.16 * e).toFixed(4) + ')';
         }
         var edge = p.edgeY, qs = p.qs;
+        // Стык «закреплённый кадр → следующий блок» (правка 2026-10-10, «белый или чёрный прямоугольник в самом низу»).
+        // Пока кадр закреплён, колонны поднимаются по очереди, левая первой, а следующий блок виден только под верхним краем
+        // каждой поднявшейся колонны (окно, см. ниже). Фото, первый экран на телефоне и стыки без закрепления — как раньше.
+        var staged = !!p.follow && !p.frame && !(narrow && p.hero) && p.sb >= vh - 2;
+        var endOff = headerOffset * smooth(clamp01((qs - 0.5) / 0.4));
+        var reveal = staged ? vh * (1 - easeOut(clamp01((qs - (k - 1) * STAIR_STEP) / span))) - endOff : edge;
+        var ys = [];
         for (var i = 0; i < k; i++) {
           var y;
-          if (i === k - 1) {
+          if (i === k - 1 && staged) {
+            y = reveal;
+          } else if (i === k - 1) {
             // последняя колонна — край следующего блока; под конец уходит вперёд на высоту шапки, чтобы при переходе
             // по меню под шапкой не оставалась полоска прежнего фона
-            y = edge - headerOffset * smooth(clamp01((qs - 0.5) / 0.4));
+            y = edge - endOff;
           } else if (narrow && p.hero) {
             // Первый экран, 767 и уже (правка 2026-10-07): гарантии внизу — на всю ширину, и левая колонна, обгоняя прокрутку втрое,
             // закрывала их за 20–30px. Здесь она сначала идёт вместе с краем блока и уходит вперёд плавно, не больше чем на 12% экрана.
             // Остальные стыки на телефоне — как на компьютере (правка 2026-10-07: «на мобильной смена фонов не применилась»).
             y = edge - vh * 0.12 * smooth(clamp01(qs / 0.5));
+          } else if (staged) {
+            y = vh * (1 - easeOut(clamp01((qs - i * STAIR_STEP) / span)));
           } else {
             y = Math.min(edge, vh * (1 - easeOut(clamp01((qs - i * STAIR_STEP) / span))));
           }
-          p.cols[i].style.transform = 'translateY(' + Math.max(0, Math.min(p.H + 2, y - p.stageTop)).toFixed(1) + 'px)';
+          ys.push(y);
+          // Колонна, чья очередь не пришла, убрана целиком под низ блока (её срезает .stair), а не поставлена к низу экрана:
+          // при прокрутке колесом блок сдвигается раньше, чем скрипт её переставит, и она выглядывала снизу полосой
+          // во всю ширину (видео владельца 2026-10-10: «Как работаем», «О компании», «Вопросы»).
+          var ty = y >= vh - 0.5 ? p.H + 2 : Math.max(0, Math.min(p.H + 2, y - p.stageTop));
+          p.cols[i].style.transform = 'translateY(' + ty.toFixed(1) + 'px)';
+        }
+        // Окно следующего блока: ступенчатый верхний край по колоннам (x — границы колонн, y — верх каждой поднявшейся колонны).
+        // Блок виден только под этим краем, выше — остановленный кадр. Не поднявшаяся колонна блок не открывает, поэтому у низа
+        // экрана видна только первая колонна, а не полоса цвета во всю ширину. Блок под колоннами — как раньше.
+        if (p.follow && !p.frame) {
+          if (staged && p.bx && p.bx.length === k + 1) {
+            // Колонна, которая ещё не поднялась (стоит у низа экрана), окно не открывает совсем — а не «от низа экрана».
+            // Иначе при плавной прокрутке колесом браузер сдвигает страницу раньше, чем скрипт успевает пересчитать окно,
+            // и под кадром на кадр-два проступает полоса следующего блока во всю ширину (видео владельца 2026-10-10, 125 %).
+            var wy = function (y2) { return y2 >= vh - 0.5 ? 10000 : y2 - edge; };
+            var pt = function (x, y2) { return x.toFixed(1) + 'px ' + Math.max(0, y2).toFixed(1) + 'px'; };
+            var pts = [pt(p.bx[0], wy(ys[0]))];
+            for (var j = 0; j < k; j++) {
+              pts.push(pt(p.bx[j + 1], wy(ys[j])));
+              if (j < k - 1) pts.push(pt(p.bx[j + 1], wy(ys[j + 1])));
+            }
+            pts.push(pt(p.bx[k], 10000), pt(p.bx[0], 10000));
+            p.follow.style.clipPath = 'polygon(' + pts.join(', ') + ')';
+          } else p.follow.style.clipPath = '';
         }
       });
       if (moving) requestPin();
